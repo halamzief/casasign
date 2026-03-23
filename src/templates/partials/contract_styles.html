@@ -1,0 +1,133 @@
+<style>
+/* === Mietvertrag Document (mv-) === */
+.mv-document {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    max-width: 52rem; margin: 0 auto; background: white;
+    border-radius: 0.75rem; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+    border: 1px solid #e2e8f0; color: #1e293b;
+    line-height: 1.7; font-size: 0.9rem;
+}
+.mv-inner { padding: 2.5rem 2rem; }
+@media (min-width: 640px) { .mv-inner { padding: 3rem 3.5rem; } }
+
+/* Header */
+.mv-header {
+    text-align: center; padding-bottom: 1.5rem;
+    margin-bottom: 2rem; border-bottom: 2px solid #f59e0b;
+}
+.mv-header h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 1.1rem; font-weight: 700; letter-spacing: 0.12em;
+    color: #1e293b; text-transform: uppercase; margin: 0 0 0.25rem;
+}
+.mv-subtitle { font-size: 0.8rem; color: #94a3b8; font-style: italic; margin: 0; }
+.mv-number {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem; letter-spacing: 0.05em;
+}
+
+/* Parties (Zwischen) Section */
+.mv-parties { padding: 1.5rem 0 2rem; text-align: center; }
+.mv-between {
+    font-size: 0.85rem; color: #64748b; font-style: italic;
+    margin: 1.25rem 0 0.75rem; letter-spacing: 0.02em;
+}
+.mv-party {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+    padding: 1rem 1.5rem; margin: 0.5rem auto; max-width: 28rem; text-align: left;
+}
+.mv-party--landlord { border-left: 3px solid #f59e0b; }
+.mv-party-name { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0 0 0.25rem; }
+.mv-party-detail { font-size: 0.8rem; color: #475569; margin: 0.15rem 0; }
+.mv-party-role {
+    font-size: 0.75rem; color: #94a3b8; font-style: italic;
+    margin-top: 0.5rem; text-align: center;
+}
+.mv-conclusion {
+    font-size: 0.95rem; font-weight: 600; color: #1e293b;
+    margin-top: 1.5rem; letter-spacing: 0.01em;
+}
+
+/* Sections */
+.mv-section {
+    padding: 1.5rem 0; border-bottom: 1px solid #f1f5f9;
+    page-break-inside: avoid;
+}
+.mv-section:last-child { border-bottom: none; }
+.mv-section h2 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.8rem; font-weight: 700; color: #475569;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 0 0 1rem; padding-left: 0.75rem;
+    border-left: 3px solid #f59e0b;
+}
+
+/* Paragraphs / Legal Text */
+.mv-p { margin: 0.5rem 0; text-align: justify; }
+.mv-p-num {
+    margin: 0.5rem 0; text-align: justify;
+    padding-left: 1.5rem; text-indent: -1.5rem;
+}
+.mv-indent { padding-left: 1.5rem; }
+.mv-strong { font-weight: 600; }
+
+/* Info Grid (data fields) */
+.mv-grid { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.75rem 0; }
+.mv-row { display: flex; flex-wrap: wrap; align-items: baseline; }
+.mv-row dt {
+    width: 180px; flex-shrink: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.75rem; font-weight: 500; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.04em;
+}
+.mv-row dd { flex: 1; font-size: 0.9rem; font-weight: 500; color: #1e293b; margin: 0; }
+
+/* Total Box */
+.mv-total {
+    margin-top: 1rem; padding: 0.875rem 1.25rem;
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.mv-total-label {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.8rem; font-weight: 600; color: #475569;
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+.mv-total-value { font-size: 1.1rem; font-weight: 700; color: #b45309; }
+
+/* Legal Note */
+.mv-legal {
+    margin-top: 0.75rem; padding: 0.5rem 0.75rem;
+    background: #f8fafc; border-left: 2px solid #cbd5e1;
+    border-radius: 0 0.25rem 0.25rem 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.75rem; color: #64748b; font-style: italic;
+}
+
+/* List */
+.mv-list { padding-left: 1.5rem; margin: 0.5rem 0; }
+.mv-list li { margin: 0.25rem 0; font-size: 0.85rem; }
+
+/* IBAN mono */
+.mv-mono {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.8rem; letter-spacing: 0.03em;
+}
+
+/* Footer */
+.mv-footer {
+    margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;
+    text-align: center; font-size: 0.7rem; color: #94a3b8;
+}
+.mv-footer p { margin: 0.15rem 0; }
+
+/* Mobile */
+@media (max-width: 640px) {
+    .mv-inner { padding: 1.5rem 1rem; }
+    .mv-row { flex-direction: column; gap: 0.125rem; }
+    .mv-row dt { width: 100%; }
+    .mv-total { flex-direction: column; gap: 0.25rem; text-align: center; }
+    .mv-party { max-width: 100%; }
+}
+</style>

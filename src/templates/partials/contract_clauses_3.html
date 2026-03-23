@@ -1,0 +1,67 @@
+{# §7 Kaution + §8 Schönheitsreparaturen + §9 Instandhaltung #}
+
+{# ── § 7 Mietsicherheit ── #}
+<section class="mv-section">
+    <h2>§ 7 Mietsicherheit</h2>
+
+    <p class="mv-p-num">1. Der Mieter stellt dem Vermieter eine Mietsicherheit in Höhe von <strong>{{ fmt_cur(kaution.betrag) }}</strong>.</p>
+
+    <p class="mv-p-num">2. Hierzu wird der Mieter den Kautionsbetrag auf folgendes Konto überweisen:</p>
+
+    <dl class="mv-grid">
+        <div class="mv-row"><dt>Kreditinstitut:</dt><dd>{{ bankverbindung.bank_name or '________________________' }}</dd></div>
+        <div class="mv-row"><dt>IBAN:</dt><dd class="mv-mono">{{ fmt_iban(bankverbindung.iban) }}</dd></div>
+        {% if bankverbindung.get('bic') %}
+        <div class="mv-row"><dt>BIC:</dt><dd class="mv-mono">{{ bankverbindung.bic }}</dd></div>
+        {% endif %}
+        <div class="mv-row"><dt>Zahlungsgrund:</dt><dd>Kaution {{ bankverbindung.get('verwendungszweck', '') }}</dd></div>
+    </dl>
+
+    <p class="mv-legal">Die Kaution ist gemäß § 551 BGB auf maximal drei Nettokaltmieten begrenzt.</p>
+
+    <p class="mv-p-num">3. Die Parteien vereinbaren ausdrücklich, dass die Mietsicherheit alle Ansprüche des Vermieters aus diesem Mietverhältnis, insbesondere auch etwaige Erstattungsansprüche von Rechtsverfolgungskosten und Zinsen aus derartigen Ansprüchen sichern soll.</p>
+
+    <p class="mv-p-num">4. Der Vermieter ist berechtigt, auch im ungekündigten Mietverhältnis die Kaution auf rechtskräftig festgestellte oder unbestrittene Forderungen zu verrechnen. In diesem Fall ist der Mieter verpflichtet, die Kaution unverzüglich wieder aufzufüllen. Der Wiederauffüllungsanspruch wird fällig, sobald der Vermieter den Mieter zur Zahlung auffordert.</p>
+</section>
+
+{# ── § 8 Schönheitsreparaturen ── #}
+<section class="mv-section">
+    <h2>§ 8 Schönheitsreparaturen</h2>
+
+    <p class="mv-p-num">1. Sofern die Mietsache in renoviertem Zustand übergeben worden ist, übernimmt der Mieter auf seine Kosten die laufenden — turnusmäßig wiederkehrenden — Schönheitsreparaturen.</p>
+
+    <p class="mv-p-num">2. Die Schönheitsreparaturen umfassen das Tapezieren, Anstreichen der Wände und Decken, das Streichen der Fußböden einschließlich Leisten, der Heizkörper und Heizrohre, der Innentüren sowie der Fenster und Außentüren von innen. Naturlasiertes Holzwerk und Kunststoffrahmen dürfen nicht mit Deckfarbe überstrichen werden. Alle Schönheitsreparaturen sind fachgerecht auszuführen.</p>
+
+    <p class="mv-p-num">3. Die Schönheitsreparaturen sind, gerechnet vom Beginn des Mietverhältnisses an bzw. von der letzten fachgerechten Durchführung an, im Allgemeinen in den nachstehenden Zeitabständen fällig — soweit nicht nach dem Grad der Abnutzung eine zeitlich andere Ausführung erforderlich ist:</p>
+
+    <p class="mv-p mv-indent"><strong>I. Wände und Decken:</strong> in Küchen, Baderäumen und Duschen alle 5 Jahre, in Wohn- und Schlafräumen, Fluren, Dielen und Toiletten alle 8 Jahre, in sonstigen Nebenräumen alle 10 Jahre.</p>
+
+    <p class="mv-p mv-indent"><strong>II. Fußböden einschließlich Leisten, Heizkörper</strong> und Heizrohre, Innentüren, Fenster, Außentüren von innen: alle 10 Jahre.</p>
+
+    <p class="mv-p mv-indent">Diese Dekorationsintervalle können sich im Einzelfall aufgrund eines vom Üblichen abweichenden Wohnverhaltens des Mieters verkürzen, etwa, wenn in der Wohnung stark geraucht wird oder weil kleine Kinder oder freilaufende Tiere verstärkt Gebrauchsspuren verursachen. Andererseits können sich diese Dekorationsintervalle verlängern, z.B. weil der Mieter häufig ortsabwesend ist oder die Wohnung nicht ständig als Lebensmittelpunkt nutzt.</p>
+
+    <p class="mv-p mv-indent">Dem Mieter bleibt der Nachweis offen, dass die Mietsache (noch) nicht renovierungsbedürftig ist. Dem Vermieter bleibt der Nachweis offen, dass bei einem entsprechenden Renovierungsbedarf im Einzelfall kürzere Renovierungsintervalle angemessen sind.</p>
+
+    <p class="mv-p-num">4. Ist der Mieter mit der Durchführung der Schönheitsreparaturen nach Maßgabe der Ziffer 3 in Verzug, verlangt der Vermieter, dass der Mieter die Schönheitsreparaturen durchführt bzw. durchführen lässt. Danach lehnt er das Leistungsangebot des Mieters ab. Nach Ablauf der Frist kann er vom Mieter Schadenersatz wegen Nichterfüllung verlangen.</p>
+
+    <p class="mv-p mv-indent">Bei Rückgabe der Wohnung am Ende des Mietverhältnisses müssen die Wände und Decken in neutralen, deckenden, hellen Farben gestrichen oder tapeziert sein. Die Arbeiten sind fachgerecht auszuführen.</p>
+
+    <p class="mv-p-num">5. Soweit die Wohnung in unrenoviertem Zustand übergeben worden ist, ist der Vermieter nicht verpflichtet, laufende Schönheitsreparaturen durchzuführen oder auf seine Kosten durchführen zu lassen. Außerordentliche Reparaturmaßnahmen (z.B. durch Wasserschaden) bleiben davon unberührt soweit der Mieter diese nicht zu vertreten hat.</p>
+
+    <p class="mv-p mv-indent">Auch soweit die Wohnung renovierungsbedürftig ist, erkennt der Mieter diese im vorhandenen Zustand als vertragsgerecht an.</p>
+</section>
+
+{# ── § 9 Instandhaltung und Pflege ── #}
+<section class="mv-section">
+    <h2>§ 9 Instandhaltung und Pflege der Mieträume</h2>
+
+    <p class="mv-p-num">1. Zeigt sich im Laufe der Mietzeit ein Mangel der Mietsache oder wird eine Maßnahme zum Schutz der Mietsache gegen eine nicht vorhergesehene Gefahr erforderlich, so hat der Mieter dies dem Vermieter unverzüglich anzuzeigen.</p>
+
+    <p class="mv-p-num">2. Der Mieter hat die Mietsache und die darin befindlichen Anlagen und Einrichtungen pfleglich und sachgemäß zu behandeln, sie frostfrei, trocken und frei von Ungeziefer zu halten. Er hat insbesondere für ordnungsgemäße Reinigung, Lüftung (mindestens viermal täglich Stoßlüftung für 5 bis 10 Minuten) und Beheizung zu sorgen. Für Beschädigungen der Mietsache und des Gebäudes sowie der dazugehörigen Anlagen ist er ersatzpflichtig, soweit sie von ihm, von Angehörigen seines Haushaltes, seinen Untermietern, Besuchern, Verwandten, Angestellten oder von ihm bestellten Handwerkern usw. verursacht werden.</p>
+
+    <p class="mv-p-num">3. Der Mieter hat verschuldensunabhängig die Kosten zu tragen für kleinere Instandhaltungs- und Instandsetzungsmaßnahmen an den Installationsgegenständen für Elektrizität, Wasser und Gas, den Heiz- und Kocheinrichtungen, den Fenster- und Türverschlüssen, Rollläden sowie den Verschlussvorrichtungen von Fensterläden.</p>
+
+    <p class="mv-p-num">4. Die Verpflichtung zur Kostentragung des Mieters beschränkt sich auf Reparaturen mit einem Gesamtaufwand von max. <strong>110,00 €</strong> je Reparatur. Der entstehende jährliche Aufwand ist auf <strong>6 %</strong> der Jahresnettokaltmiete beschränkt.</p>
+
+    <p class="mv-p-num">5. Der Mieter ist verpflichtet die Fußbodenentwässerung auf seinem Balkon/Loggia und/oder auf der Terrasse immer freizuhalten und regelmäßig zu säubern, um das Abfließen des Oberflächenwassers zu gewährleisten.</p>
+</section>
