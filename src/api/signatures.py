@@ -186,6 +186,17 @@ async def validate_token_and_get_contract(
             user_agent=user_agent,
         )
 
+        # Re-render contract HTML using polished Jinja2 template if contract_data exists
+        if response.contract_data and hasattr(request.app.state, "templates"):
+            try:
+                templates = request.app.state.templates
+                polished_html = templates.get_template(
+                    "partials/contract_polished.html"
+                ).render(contract_data=response.contract_data)
+                response.contract_html = polished_html
+            except Exception as tmpl_err:
+                logger.warning("Failed to render polished template, using fallback", error=str(tmpl_err))
+
         logger.success("API: Token validated", signer_email=response.signer_email)
         return response
 
