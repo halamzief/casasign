@@ -169,6 +169,29 @@ class SignatureRequestService:
                 error_context={"email_result": result.message},
             )
 
+    async def resend_signing_emails(self, request_id: UUID) -> int:
+        """Resend signing emails to all unsigned signers.
+
+        Returns:
+            Number of emails resent
+        """
+        request = await self.signature_repo.get_request_by_id(request_id)
+        if not request:
+            raise ValueError(f"Signature request not found: {request_id}")
+
+        signers = await self.signature_repo.get_signers_by_request(request_id)
+        unsigned = [s for s in signers if s.signed_at is None]
+
+        for signer in unsigned:
+            await self._send_signature_request_email(request, signer)
+
+        logger.info(
+            "Resent signing emails",
+            request_id=str(request_id),
+            resent_count=len(unsigned),
+        )
+        return len(unsigned)
+
     async def get_request_status(self, request_id: UUID) -> dict:
         """Get signature request status.
 

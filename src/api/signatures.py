@@ -139,6 +139,29 @@ async def get_signature_status(
         raise HTTPException(status_code=500, detail="Failed to get signature status") from e
 
 
+@router.post("/resend/{request_id}")
+async def resend_signing_emails(
+    request_id: UUID,
+    service: SignatureRequestService = Depends(get_signature_service),
+) -> dict:
+    """Resend signing emails to all unsigned signers.
+
+    Re-sends the signing invitation email to every signer who hasn't
+    signed yet. Used for the "Erneut senden" button.
+    """
+    logger.info("API: Resending signing emails", request_id=str(request_id))
+
+    try:
+        resent = await service.resend_signing_emails(request_id)
+        return {"success": True, "resent_count": resent}
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except Exception as e:
+        logger.error("API: Failed to resend", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to resend signing emails") from e
+
+
 async def get_signing_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> SigningService:
