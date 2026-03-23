@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{% block title %}SignCasa{% endblock %}</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (self-hosted) -->
+    <script src="/static/js/tailwind.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -19,12 +19,6 @@
                             300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
                             600: '#d97706', 700: '#b45309', 800: '#92400e',
                             900: '#78350f',
-                        },
-                        emerald: {
-                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0',
-                            300: '#6ee7b7', 400: '#34d399', 500: '#10b981',
-                            600: '#059669', 700: '#047857', 800: '#065f46',
-                            900: '#064e3b',
                         }
                     }
                 }
@@ -32,30 +26,21 @@
         }
     </script>
 
-    <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- htmx (self-hosted) -->
+    <script src="/static/js/htmx.min.js"></script>
 
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.14.3/dist/cdn.min.js"></script>
+    <!-- Alpine.js (self-hosted) -->
+    <script defer src="/static/js/alpine.min.js"></script>
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <!-- Lucide Icons (self-hosted) -->
+    <script src="/static/js/lucide.min.js"></script>
 
     {% block head %}{% endblock %}
 
     <style>
-        /* Base styles */
         [x-cloak] { display: none !important; }
-
-        /* Spinner animation */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-
-        /* Touch optimization */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
         .touch-action-none {
             touch-action: none;
             -webkit-tap-highlight-color: transparent;
@@ -63,21 +48,11 @@
             -webkit-user-select: none;
             user-select: none;
         }
-
-        /* Signature canvas */
-        .signature-canvas {
-            cursor: crosshair;
-        }
+        .signature-canvas { cursor: crosshair; }
         @media (hover: none) and (pointer: coarse) {
-            .signature-canvas {
-                cursor: default;
-            }
+            .signature-canvas { cursor: default; }
         }
-
-        /* Button min touch target */
-        .btn-touch {
-            min-height: 48px;
-        }
+        .btn-touch { min-height: 48px; }
 
         {% block styles %}{% endblock %}
     </style>
@@ -88,15 +63,10 @@
     <!-- Initialize Lucide icons -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         });
-        // Re-initialize after htmx swaps
         document.body.addEventListener('htmx:afterSwap', function() {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         });
     </script>
 
