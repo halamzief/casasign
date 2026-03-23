@@ -12,7 +12,6 @@ from jinja2 import Environment, FileSystemLoader
 from loguru import logger
 
 from src.models.signature_request import SignatureRequest, SignatureSigner
-
 from .pdf_processor import PDFProcessingError
 
 

@@ -35,9 +35,9 @@ class SignatureRequestService:
         """Create signature request and send emails to first signer(s).
 
         Supports three modes:
-        - PDF mode: request_data.document_pdf_base64 is provided
+        - PDF mode: request_data.document_pdf_base64 is provided (legacy)
         - JSON mode: request_data.contract_data is provided
-        - HTML mode: request_data.document_html is provided
+        - HTML mode: request_data.document_html is provided (pre-rendered)
 
         Args:
             request_data: Signature request creation data
@@ -46,7 +46,9 @@ class SignatureRequestService:
         Returns:
             SignatureRequestResponse with created request and signers
         """
+        # Determine document type
         document_type = request_data.document_type
+        is_json_mode = document_type == "json"
 
         logger.info(
             "Creating signature request",
@@ -58,8 +60,8 @@ class SignatureRequestService:
         try:
             # Prepare contract_data dict if in JSON mode
             contract_data_dict = None
-            if document_type == "json" and request_data.contract_data:
-                contract_data_dict = request_data.contract_data
+            if is_json_mode and request_data.contract_data:
+                contract_data_dict = request_data.contract_data.model_dump()
 
             # Create request and signers in database
             request, signers = await self.signature_repo.create_request(
@@ -74,11 +76,10 @@ class SignatureRequestService:
                 contract_data=contract_data_dict,
                 # HTML mode
                 document_html=request_data.document_html,
-                # Generic metadata
+                # Metadata
                 document_title=request_data.document_title,
                 document_name=request_data.document_name,
                 sender_name=request_data.sender_name,
-                email_variables=request_data.email_variables,
                 callback_url=request_data.callback_url,
                 custom_email_template_id=request_data.custom_email_template_id,
                 expires_in_days=request_data.expires_in_days,
@@ -93,6 +94,7 @@ class SignatureRequestService:
             )
 
             # Send emails to first signer(s) in order
+            # If multiple signers have order=1, send to all (parallel signing)
             first_order = min(signer.signing_order for signer in signers)
             first_signers = [s for s in signers if s.signing_order == first_order]
 
@@ -119,6 +121,7 @@ class SignatureRequestService:
         signer: SignatureSigner,
     ) -> None:
         """Send signature request email to signer."""
+        # Generate signing link
         signing_link = f"{settings.signing_base_url}/sign/{signer.verification_token}"
 
         logger.info(
@@ -127,24 +130,27 @@ class SignatureRequestService:
             signing_link=signing_link,
         )
 
-        # Build variables from stored email_variables + defaults
-        variables = dict(request.email_variables or {})
-        variables.update(
-            {
-                "signer_name": signer.name,
-                "signer_email": signer.email,
-                "signing_link": signing_link,
-                "sender_name": request.sender_name,
-                "document_title": request.document_title,
-                "unsubscribe_link": f"{settings.signing_base_url}/unsubscribe",
-            }
-        )
+        # Extract data from contract_data if available (JSON mode)
+        if request.is_json_mode and request.contract_data:
+            contract = request.contract_data
+            landlord_name = contract.get("vermieter", {}).get("name", "Vermieter")
+            mietobjekt = contract.get("mietobjekt", {})
+            property_address = f"{mietobjekt.get('strasse', '')} {mietobjekt.get('hausnummer', '')}, {mietobjekt.get('plz', '')} {mietobjekt.get('ort', '')}"
+            kaution_amount = contract.get("kaution", {}).get("betrag", 0.0)
+        else:
+            # PDF mode: use placeholder values (data not available)
+            landlord_name = "Vermieter"
+            property_address = "Mietobjekt"
+            kaution_amount = 0.0
 
-        result = await self.email_service.send_email(
-            to_email=signer.email,
-            to_name=signer.name,
-            template_key="signature_request",
-            variables=variables,
+        result = await self.email_service.send_signature_request(
+            signer_email=signer.email,
+            signer_name=signer.name,
+            landlord_name=landlord_name,
+            property_address=property_address,
+            signing_link=signing_link,
+            kaution_amount=kaution_amount,
+            language="de",
         )
 
         # Log audit event
@@ -156,6 +162,7 @@ class SignatureRequestService:
 
         if not result.success:
             logger.error("Failed to send email", signer_email=signer.email, error=result.message)
+            # Log error but don't fail the request
             await self.audit_service.log_error(
                 request_id=request.id,
                 error_message=f"Failed to send email to {signer.email}",

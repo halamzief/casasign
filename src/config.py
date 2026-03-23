@@ -11,22 +11,22 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Service Configuration
-    service_name: str = "casasign"
+    service_name: str = "signcasa-signatures"
     service_port: int = 9000
     debug: bool = False
     log_level: str = "INFO"
 
     # Database
-    database_url: str  # postgresql+asyncpg://user:pass@host:5432/casasign
+    database_url: str  # postgresql+asyncpg://user:pass@host:5432/signcasa
 
     # Email Service (Resend)
     resend_api_key: str
-    from_email: str = "signatures@casasign.dev"
-    from_name: str = "CasaSign"
+    from_email: str = "signatures@signcasa.de"
+    from_name: str = "SignCasa Signatures"
 
     # Signature Configuration
     signature_expiry_days: int = 7
-    signing_base_url: str = "https://sign.casasign.dev"
+    signing_base_url: str = "https://sign.signcasa.de"
     backend_url: str = os.getenv("BACKEND_URL", "http://fes-service:9000")
     callback_timeout_seconds: int = 30
 
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # Security
     secret_key: str
-    allowed_origins: str = "http://localhost:5174,http://localhost:3000"
+    allowed_origins: str = "http://localhost:5174,https://app.signcasa.de"
 
     # WhatsApp Business (Premium Feature - Optional)
     whatsapp_business_enabled: bool = False

@@ -1,0 +1,94 @@
+{# Welcome Screen - First thing signers see after loading #}
+<div class="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-8">
+    <div class="max-w-lg w-full">
+        <!-- SignCasa Branding -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-14 h-14 bg-amber-100 rounded-2xl mb-4">
+                <i data-lucide="file-signature" class="w-7 h-7 text-amber-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mb-1">Digitale Vertragsunterschrift</h1>
+            <p class="text-slate-500 text-sm">powered by SignCasa</p>
+        </div>
+
+        <!-- Welcome Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mb-6">
+            <!-- Greeting -->
+            <div class="text-center mb-6">
+                <p class="text-slate-600 text-sm mb-1">Hallo</p>
+                <p class="text-lg font-semibold text-slate-800" x-text="contractData.signer_name"></p>
+            </div>
+
+            <p class="text-slate-600 text-center text-sm leading-relaxed mb-6">
+                <span x-text="contractData.landlord_name"></span> hat Ihnen einen Mietvertrag
+                zur digitalen Unterschrift bereitgestellt.
+            </p>
+
+            <!-- Property Info -->
+            <div class="bg-slate-50 rounded-lg px-4 py-3 mb-8 text-center">
+                <p class="text-xs text-slate-400 uppercase tracking-wider font-medium mb-1">Mietobjekt</p>
+                <p class="text-sm font-medium text-slate-700" x-text="contractData.property_address"></p>
+            </div>
+
+            <!-- 3-Step Workflow -->
+            <div class="flex items-start justify-between gap-2 mb-8">
+                <!-- Step 1 -->
+                <div class="flex-1 text-center">
+                    <div class="inline-flex items-center justify-center w-10 h-10 bg-amber-50 rounded-xl mb-2">
+                        <i data-lucide="file-text" class="w-5 h-5 text-amber-600"></i>
+                    </div>
+                    <p class="text-xs font-medium text-slate-700">Vertrag lesen</p>
+                </div>
+
+                <!-- Arrow -->
+                <div class="flex items-center pt-4">
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex-1 text-center">
+                    <div class="inline-flex items-center justify-center w-10 h-10 bg-amber-50 rounded-xl mb-2">
+                        <i data-lucide="check-square" class="w-5 h-5 text-amber-600"></i>
+                    </div>
+                    <p class="text-xs font-medium text-slate-700">Bestätigen</p>
+                </div>
+
+                <!-- Arrow -->
+                <div class="flex items-center pt-4">
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex-1 text-center">
+                    <div class="inline-flex items-center justify-center w-10 h-10 bg-amber-50 rounded-xl mb-2">
+                        <i data-lucide="pen-tool" class="w-5 h-5 text-amber-600"></i>
+                    </div>
+                    <p class="text-xs font-medium text-slate-700">Unterschreiben</p>
+                </div>
+            </div>
+
+            <!-- CTA Button -->
+            <button type="button"
+                @click="showWelcome = false; $nextTick(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); })"
+                class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl
+                       transition-colors shadow-sm shadow-amber-200 btn-touch">
+                Vertrag ansehen
+            </button>
+        </div>
+
+        <!-- Trust Indicators -->
+        <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
+            <div class="flex items-center gap-1">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                <span>Rechtssicher</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                <span>Verschlüsselt</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <i data-lucide="stamp" class="w-3.5 h-3.5"></i>
+                <span>eIDAS-konform</span>
+            </div>
+        </div>
+    </div>
+</div>

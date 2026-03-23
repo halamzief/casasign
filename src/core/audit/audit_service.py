@@ -146,126 +146,77 @@ class AuditService:
     # Convenience helper methods
 
     async def log_request_created(
-        self,
-        request_id: UUID,
-        requester_email: str,
-        signer_count: int,
+        self, request_id: UUID, requester_email: str, signer_count: int,
         ip_address: Optional[str] = None,
     ) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="request_created",
-            actor_email=requester_email,
-            actor_role="system",
-            ip_address=ip_address,
+            request_id=request_id, event_type="request_created",
+            actor_email=requester_email, actor_role="system", ip_address=ip_address,
             metadata={"signer_count": signer_count, "action": "Signature request created"},
         )
 
     async def log_email_sent(
-        self,
-        request_id: UUID,
-        signer_email: str,
-        email_id: Optional[str] = None,
+        self, request_id: UUID, signer_email: str, email_id: Optional[str] = None,
     ) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="email_sent",
-            actor_email=signer_email,
-            actor_role="system",
+            request_id=request_id, event_type="email_sent",
+            actor_email=signer_email, actor_role="system",
             metadata={"email_id": email_id, "action": "Signature request email sent"},
         )
 
     async def log_link_clicked(
-        self,
-        request_id: UUID,
-        signer_email: str,
-        ip_address: str,
-        user_agent: str,
+        self, request_id: UUID, signer_email: str, ip_address: str, user_agent: str,
     ) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="link_clicked",
-            actor_email=signer_email,
-            actor_role="signer",
-            ip_address=ip_address,
-            user_agent=user_agent,
+            request_id=request_id, event_type="link_clicked",
+            actor_email=signer_email, actor_role="signer",
+            ip_address=ip_address, user_agent=user_agent,
             metadata={"action": "Signing link clicked"},
         )
 
     async def log_document_viewed(
-        self,
-        request_id: UUID,
-        signer_email: str,
-        ip_address: str,
-        user_agent: str,
+        self, request_id: UUID, signer_email: str, ip_address: str, user_agent: str,
     ) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="document_viewed",
-            actor_email=signer_email,
-            actor_role="signer",
-            ip_address=ip_address,
-            user_agent=user_agent,
+            request_id=request_id, event_type="document_viewed",
+            actor_email=signer_email, actor_role="signer",
+            ip_address=ip_address, user_agent=user_agent,
             metadata={"action": "Document viewed"},
         )
 
     async def log_consent_given(
-        self,
-        request_id: UUID,
-        signer_email: str,
-        consents: dict,
-        ip_address: str,
+        self, request_id: UUID, signer_email: str, consents: dict, ip_address: str,
     ) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="consent_given",
-            actor_email=signer_email,
-            actor_role="signer",
-            ip_address=ip_address,
+            request_id=request_id, event_type="consent_given",
+            actor_email=signer_email, actor_role="signer", ip_address=ip_address,
             metadata={"action": "GDPR consent given", "consents": consents},
         )
 
     async def log_signed(
-        self,
-        request_id: UUID,
-        signer_email: str,
-        signer_name: str,
-        ip_address: str,
-        user_agent: str,
+        self, request_id: UUID, signer_email: str, signer_name: str,
+        ip_address: str, user_agent: str,
     ) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="signed",
-            actor_email=signer_email,
-            actor_role="signer",
-            ip_address=ip_address,
-            user_agent=user_agent,
+            request_id=request_id, event_type="signed",
+            actor_email=signer_email, actor_role="signer",
+            ip_address=ip_address, user_agent=user_agent,
             metadata={"action": "Signature completed", "signer_name": signer_name},
         )
 
     async def log_all_completed(self, request_id: UUID, total_signers: int) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="completed",
-            actor_role="system",
+            request_id=request_id, event_type="completed", actor_role="system",
             metadata={"action": "All signatures completed", "total_signers": total_signers},
         )
 
     async def log_error(
-        self,
-        request_id: UUID,
-        error_message: str,
-        error_context: Optional[dict] = None,
+        self, request_id: UUID, error_message: str, error_context: Optional[dict] = None,
     ) -> SignatureAuditLog:
         return await self.log_event(
-            request_id=request_id,
-            event_type="error",
-            actor_role="system",
-            metadata={
-                "action": "Error occurred",
-                "error_message": error_message,
-                "error_context": error_context,
-            },
+            request_id=request_id, event_type="error", actor_role="system",
+            metadata={"action": "Error occurred", "error_message": error_message,
+                       "error_context": error_context},
         )
 
     def _row_to_model(self, row: SignatureAuditLogRow) -> SignatureAuditLog:

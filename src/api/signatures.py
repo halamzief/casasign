@@ -7,9 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import settings
 from src.core.audit.audit_service import AuditService
 from src.core.email.resend_service import ResendEmailService
 from src.core.email.template_service import EmailTemplateService
@@ -17,7 +15,6 @@ from src.core.repositories.email_template_repository import EmailTemplateReposit
 from src.core.repositories.signature_repository import SignatureRepository
 from src.core.services.signature_request_service import SignatureRequestService
 from src.core.services.signing_service import SigningService
-from src.database.session import get_db_session
 from src.schemas.signature import (
     SignatureRequestCreate,
     SignatureRequestResponse,
@@ -28,6 +25,10 @@ from src.schemas.signing import (
     SigningCompleteResponse,
     TokenValidationResponse,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.config import settings
+from src.database.session import get_db_session
 
 router = APIRouter(prefix="/api/sign", tags=["Signatures"])
 
@@ -423,7 +424,7 @@ async def download_signed_pdf_file(
         return FileResponse(
             path=str(file_path),
             media_type="application/pdf",
-            filename=f"{request.document_name or 'Document'}_{request.contract_id}_signed.pdf",
+            filename=f"Mietvertrag_{request.contract_id}_signed.pdf",
         )
 
     except HTTPException:
@@ -431,3 +432,5 @@ async def download_signed_pdf_file(
     except Exception as e:
         logger.error(f"API: Failed to download PDF file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to download PDF: {str(e)}") from e
+
+

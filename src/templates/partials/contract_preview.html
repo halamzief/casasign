@@ -22,7 +22,7 @@
 {% if iban %}{{ iban | replace(" ", "") | batch(4) | map('join') | join(' ') }}{% else %}-{% endif %}
 {% endmacro %}
 
-<article class="contract-preview max-w-3xl mx-auto p-4 text-gray-800" role="document" aria-label="Vertragsdokument">
+<article class="contract-preview max-w-3xl mx-auto p-4 text-gray-800" role="document" aria-label="Mietvertrag">
     <style>
         .contract-preview { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-overflow-scrolling: touch; }
         .contract-header { text-align: center; padding: 1.5rem 0; border-bottom: 3px solid #059669; margin-bottom: 1.5rem; }
@@ -51,7 +51,7 @@
 
     <!-- Header -->
     <header class="contract-header">
-        <h1>MIETVERTRAG ÜBER WOHNRAUM</h1>
+        <h1>MIETVERTRAG UBER WOHNRAUM</h1>
         {% if metadata.contract_number %}
             <p class="contract-number">Vertragsnummer: {{ metadata.contract_number }}</p>
         {% endif %}
@@ -59,7 +59,7 @@
 
     <!-- Section 1: Vermieter -->
     <section class="contract-section" aria-labelledby="section-vermieter">
-        <h2 id="section-vermieter">§ 1 VERMIETER</h2>
+        <h2 id="section-vermieter">SS 1 VERMIETER</h2>
         <dl class="info-grid">
             <div class="info-row">
                 <dt>Name/Firma:</dt>
@@ -86,7 +86,7 @@
 
     <!-- Section 2: Mieter -->
     <section class="contract-section" aria-labelledby="section-mieter">
-        <h2 id="section-mieter">§ 2 MIETER</h2>
+        <h2 id="section-mieter">SS 2 MIETER</h2>
 
         <h3>Mieter 1 (Hauptmieter):</h3>
         <dl class="info-grid">
@@ -143,7 +143,7 @@
 
     <!-- Section 3: Mietobjekt -->
     <section class="contract-section" aria-labelledby="section-mietobjekt">
-        <h2 id="section-mietobjekt">§ 3 MIETOBJEKT</h2>
+        <h2 id="section-mietobjekt">SS 3 MIETOBJEKT</h2>
         <dl class="info-grid">
             {% if mietobjekt.liegenschaft %}
             <div class="info-row">
@@ -190,7 +190,7 @@
 
     <!-- Section 4: Mietzeit -->
     <section class="contract-section" aria-labelledby="section-mietzeit">
-        <h2 id="section-mietzeit">§ 4 MIETZEIT</h2>
+        <h2 id="section-mietzeit">SS 4 MIETZEIT</h2>
         <dl class="info-grid">
             <div class="info-row">
                 <dt>Mietbeginn:</dt>
@@ -217,7 +217,7 @@
 
     <!-- Section 5: Miete und Nebenkosten -->
     <section class="contract-section" aria-labelledby="section-miete">
-        <h2 id="section-miete">§ 5 MIETE UND NEBENKOSTEN</h2>
+        <h2 id="section-miete">SS 5 MIETE UND NEBENKOSTEN</h2>
         <dl class="info-grid">
             <div class="info-row">
                 <dt>Nettokaltmiete:</dt>
@@ -240,7 +240,7 @@
 
     <!-- Section 6: Kaution -->
     <section class="contract-section" aria-labelledby="section-kaution">
-        <h2 id="section-kaution">§ 6 KAUTION</h2>
+        <h2 id="section-kaution">SS 6 KAUTION</h2>
         <dl class="info-grid">
             <div class="info-row">
                 <dt>Kautionsbetrag:</dt>
@@ -248,13 +248,13 @@
             </div>
         </dl>
         <p class="text-sm text-gray-600 mt-2">
-            Die Kaution ist gemäß § 551 BGB auf maximal 3 Nettokaltmieten begrenzt.
+            Die Kaution ist gemass SS 551 BGB auf maximal 3 Nettokaltmieten begrenzt.
         </p>
     </section>
 
     <!-- Section 7: Bankverbindung -->
     <section class="contract-section" aria-labelledby="section-bank">
-        <h2 id="section-bank">§ 7 BANKVERBINDUNG</h2>
+        <h2 id="section-bank">SS 7 BANKVERBINDUNG</h2>
         <dl class="info-grid">
             <div class="info-row">
                 <dt>Bank:</dt>
@@ -282,7 +282,7 @@
     <!-- Section 8: Sonstige Vereinbarungen -->
     {% if vereinbarungen and (vereinbarungen.besonderheiten or vereinbarungen.sonstige) %}
     <section class="contract-section" aria-labelledby="section-vereinbarungen">
-        <h2 id="section-vereinbarungen">§ 8 SONSTIGE VEREINBARUNGEN</h2>
+        <h2 id="section-vereinbarungen">SS 8 SONSTIGE VEREINBARUNGEN</h2>
         {% if vereinbarungen.besonderheiten %}
         <p class="whitespace-pre-wrap">{{ vereinbarungen.besonderheiten }}</p>
         {% endif %}
@@ -294,9 +294,9 @@
 
     <!-- Section 9: Unterschriften -->
     <section class="contract-section" aria-labelledby="section-unterschriften">
-        <h2 id="section-unterschriften">§ 9 UNTERSCHRIFTEN</h2>
+        <h2 id="section-unterschriften">SS 9 UNTERSCHRIFTEN</h2>
         <p class="signature-note">
-            Mit der digitalen Unterschrift bestätigen alle Parteien die Richtigkeit der Angaben und
+            Mit der digitalen Unterschrift bestatigen alle Parteien die Richtigkeit der Angaben und
             stimmen den Vertragsbedingungen zu.
         </p>
     </section>

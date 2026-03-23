@@ -33,11 +33,10 @@ class SignatureRequestRow(Base):
         DateTime(timezone=True), nullable=True
     )
 
-    # Generic document metadata
-    document_title: Mapped[str] = mapped_column(String(500), nullable=False, default="Dokument")
+    # Metadata
+    document_title: Mapped[str | None] = mapped_column(String(500), nullable=True)
     document_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    sender_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
-    email_variables: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    sender_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Status
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
@@ -49,7 +48,9 @@ class SignatureRequestRow(Base):
 
     # Optional
     callback_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    custom_email_template_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)
+    custom_email_template_id: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False), nullable=True
+    )
 
     # Relationships
     signers: Mapped[list["SignatureSignerRow"]] = relationship(

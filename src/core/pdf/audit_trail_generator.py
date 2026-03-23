@@ -42,7 +42,7 @@ class AuditTrailGenerator:
         # Page margins
         margin_x = 20 * mm
         margin_y = 20 * mm
-        width - 2 * margin_x
+        content_width = width - 2 * margin_x
         y_position = height - margin_y
 
         # Title

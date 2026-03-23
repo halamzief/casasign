@@ -1,4 +1,4 @@
-"""CasaSign - Generic digital document signature service."""
+"""SignCasa Signatures Microservice - FES compliant digital signatures."""
 
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage application lifecycle events."""
     # Startup
     logger.info(
-        f"Starting {settings.service_name} service",
+        "Starting SignCasa Signatures Microservice",
         service=settings.service_name,
         port=settings.service_port,
         debug=settings.debug,
@@ -66,13 +66,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown
     await dispose_engine()
-    logger.info(f"Shutting down {settings.service_name} service")
+    logger.info("Shutting down SignCasa Signatures Microservice")
 
 
 # Create FastAPI application
 app = FastAPI(
-    title=f"{settings.service_name} API",
-    description="Digital document signature service with audit trails",
+    title="SignCasa Signatures API",
+    description="FES (Fortgeschrittene Elektronische Signatur) compliant digital signature service",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",

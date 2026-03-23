@@ -33,7 +33,7 @@ class SigningService:
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
     ) -> TokenValidationResponse:
-        """Validate signing token and return document data.
+        """Validate signing token and return contract data.
 
         Args:
             token: Verification token from email link
@@ -41,7 +41,7 @@ class SigningService:
             user_agent: Client user agent
 
         Returns:
-            TokenValidationResponse with document and signer data
+            TokenValidationResponse with contract and signer data
 
         Raises:
             ValueError: If token invalid or expired
@@ -61,14 +61,14 @@ class SigningService:
         if not request:
             raise ValueError("Signature request not found")
 
-        # Check if expired (handle timezone-aware comparison)
-        if request.expires_at:
-            expires_at = request.expires_at
-            if expires_at.tzinfo is None:
-                expires_at = expires_at.replace(tzinfo=timezone.utc)
-            if expires_at < datetime.now(timezone.utc):
-                logger.warning("Token expired", request_id=str(request.id))
-                raise ValueError("Signing link has expired")
+        # Check if expired
+        if (
+            request.expires_at
+            and datetime.fromisoformat(str(request.expires_at)).replace(tzinfo=timezone.utc)
+            < datetime.now(timezone.utc)
+        ):
+            logger.warning("Token expired", request_id=str(request.id))
+            raise ValueError("Signing link has expired")
 
         # Check if already signed
         is_already_signed = signer.signed_at is not None
@@ -81,9 +81,26 @@ class SigningService:
             user_agent=user_agent or "unknown",
         )
 
-        # Generate document HTML based on document type
-        contract_html = self._resolve_document_html(request)
-        contract_data = request.contract_data if request.is_json_mode else None
+        # Generate contract HTML based on document type
+        if request.document_type == "html" and request.document_html:
+            # HTML mode: Use pre-rendered HTML from caller
+            contract_html = request.document_html
+            contract_data = None
+            property_address = request.document_title or ""
+            landlord_name = request.sender_name or "Vermieter"
+        elif request.is_json_mode and request.contract_data:
+            # JSON mode: Render HTML from contract data
+            contract_html = self._render_html_from_contract_data(request.contract_data)
+            contract_data = request.contract_data
+            # Extract display fields from contract data
+            property_address = self._get_property_address(request.contract_data)
+            landlord_name = request.contract_data.get("vermieter", {}).get("name", "Vermieter")
+        else:
+            # PDF mode: Use placeholder HTML (PDF will be shown)
+            contract_html = self._generate_contract_html(request, signer)
+            contract_data = None
+            property_address = ""
+            landlord_name = "Vermieter"
 
         logger.success(
             "Token validated",
@@ -105,8 +122,8 @@ class SigningService:
             document_type=request.document_type,
             contract_html=contract_html,
             contract_data=contract_data,
-            document_description=request.document_title,
-            sender_name=request.sender_name,
+            property_address=property_address,
+            landlord_name=landlord_name,
             is_already_signed=is_already_signed,
             expires_at=str(request.expires_at),
             created_at=str(request.created_at),
@@ -125,7 +142,7 @@ class SigningService:
         Args:
             token: Verification token
             signature_image_base64: Canvas signature as base64 PNG
-            consents: Consents data
+            consents: GDPR consents
             ip_address: Client IP
             user_agent: Client user agent
 
@@ -144,7 +161,7 @@ class SigningService:
             raise ValueError("Invalid signing link")
 
         if signer.signed_at:
-            raise ValueError("Document already signed")
+            raise ValueError("Contract already signed")
 
         # Get request
         request = await self.signature_repo.get_request_by_id(signer.request_id)
@@ -160,7 +177,7 @@ class SigningService:
             user_agent=user_agent,
         )
 
-        # Record consents in audit trail
+        # Record GDPR consents in audit trail
         await self.audit_service.log_event(
             request_id=request.id,
             event_type="consent_given",
@@ -189,15 +206,68 @@ class SigningService:
         all_signed = all(s.signed_at is not None for s in all_signers)
 
         if all_signed:
-            await self._handle_all_signed(request, all_signers)
+            # Update request status to completed
+            await self.signature_repo.update_request_status(
+                request_id=request.id,
+                status="completed",
+                completed_at=datetime.now(timezone.utc),
+            )
+
+            # Log completion
+            await self.audit_service.log_all_completed(
+                request_id=request.id,
+                total_signers=len(all_signers),
+            )
+
+            logger.success("All signatures completed", request_id=str(request.id))
+
+            # Week 3: Process completed request (PDF generation, audit trail, webhook)
+            # This will be handled by the completion service
+            # Note: For async processing, this can be moved to a background task
+            logger.info(
+                "All signers completed. Ready for PDF processing.",
+                request_id=str(request.id),
+            )
+
             next_signer = None
         else:
+            # Update to in_progress
             await self.signature_repo.update_request_status(
-                request_id=request.id, status="in_progress"
+                request_id=request.id,
+                status="in_progress",
             )
+
+            # Get next signer
             next_signer = self._get_next_signer(signer.signing_order, all_signers)
+
             if next_signer:
-                await self._send_next_signer_email(request, next_signer)
+                logger.info("Next signer", name=next_signer.name, email=next_signer.email)
+                # Send email to next signer
+                signing_link = f"{settings.signing_base_url}/sign/{next_signer.verification_token}"
+
+                # Extract data from contract_data if available
+                contract_data = request.contract_data or {}
+                landlord_name = contract_data.get("vermieter", {}).get("name", "Vermieter")
+                mietobjekt = contract_data.get("mietobjekt", {})
+                property_address = (
+                    f"{mietobjekt.get('strasse', '')} {mietobjekt.get('hausnummer', '')}, "
+                    f"{mietobjekt.get('plz', '')} {mietobjekt.get('ort', '')}"
+                ).strip(", ") if mietobjekt else ""
+                kaution_amount = contract_data.get("kaution", {}).get("betrag", 0.0)
+
+                await self.email_service.send_signature_request(
+                    signer_email=next_signer.email,
+                    signer_name=next_signer.name,
+                    landlord_name=landlord_name,
+                    property_address=property_address,
+                    signing_link=signing_link,
+                    kaution_amount=kaution_amount,
+                )
+                # Log email sent
+                await self.audit_service.log_email_sent(
+                    request_id=request.id,
+                    signer_email=next_signer.email,
+                )
 
         logger.success(
             "Signature completed",
@@ -215,62 +285,45 @@ class SigningService:
             "all_completed": all_signed,
         }
 
-    async def _handle_all_signed(self, request, all_signers: list) -> None:  # noqa: ANN001
-        """Handle completion when all signers have signed."""
-        await self.signature_repo.update_request_status(
-            request_id=request.id,
-            status="completed",
-            completed_at=datetime.now(timezone.utc),
-        )
-        await self.audit_service.log_all_completed(
-            request_id=request.id,
-            total_signers=len(all_signers),
-        )
-        logger.success("All signatures completed", request_id=str(request.id))
-        logger.info(
-            "All signers completed. Ready for PDF processing.",
-            request_id=str(request.id),
-        )
+    def _generate_contract_html(self, request, signer: SignatureSigner) -> str:
+        """Generate contract HTML from template.
 
-    async def _send_next_signer_email(self, request, next_signer: SignatureSigner) -> None:  # noqa: ANN001
-        """Send signing invitation email to the next signer."""
-        logger.info("Next signer", name=next_signer.name, email=next_signer.email)
-        signing_link = f"{settings.signing_base_url}/sign/{next_signer.verification_token}"
+        TODO: In production, use proper contract template rendering.
+        """
+        return f"""
+        <div class="contract-document">
+            <h1 class="text-2xl font-bold mb-4">Mietvertrag</h1>
 
-        # Build email variables from stored email_variables + defaults
-        variables = dict(request.email_variables or {})
-        variables.update(
-            {
-                "signer_name": next_signer.name,
-                "signer_email": next_signer.email,
-                "signing_link": signing_link,
-                "sender_name": request.sender_name,
-                "document_title": request.document_title,
-                "unsubscribe_link": f"{settings.signing_base_url}/unsubscribe",
-            }
-        )
+            <section class="mb-6">
+                <h2 class="text-xl font-semibold mb-2">Vertragsparteien</h2>
+                <p><strong>Vermieter:</strong> Max Mustermann</p>
+                <p><strong>Mieter:</strong> {signer.name}</p>
+            </section>
 
-        await self.email_service.send_email(
-            to_email=next_signer.email,
-            to_name=next_signer.name,
-            template_key="signature_request",
-            variables=variables,
-        )
-        await self.audit_service.log_email_sent(
-            request_id=request.id,
-            signer_email=next_signer.email,
-        )
+            <section class="mb-6">
+                <h2 class="text-xl font-semibold mb-2">Mietobjekt</h2>
+                <p>Musterstraße 123</p>
+                <p>10115 Berlin</p>
+            </section>
 
-    def _resolve_document_html(self, request) -> str:  # noqa: ANN001
-        """Resolve the HTML content to display for the document."""
-        if request.is_html_mode and request.document_html:
-            return request.document_html
-        if request.is_json_mode and request.contract_data:
-            return self._render_generic_data_view(request.contract_data)
-        # PDF mode: placeholder
-        return (
-            f'<div class="document-placeholder"><p>PDF-Dokument: {request.document_title}</p></div>'
-        )
+            <section class="mb-6">
+                <h2 class="text-xl font-semibold mb-2">Mietkonditionen</h2>
+                <p><strong>Kaltmiete:</strong> 1.200,00 €</p>
+                <p><strong>Nebenkosten:</strong> 200,00 €</p>
+                <p><strong>Kaution:</strong> 3.600,00 €</p>
+            </section>
+
+            <section class="mb-6">
+                <h2 class="text-xl font-semibold mb-2">Mietbeginn</h2>
+                <p>01.01.2025</p>
+            </section>
+
+            <section class="mb-6">
+                <h2 class="text-xl font-semibold mb-2">Allgemeine Geschäftsbedingungen</h2>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </section>
+        </div>
+        """
 
     def _get_next_signer(
         self, current_order: int, all_signers: list[SignatureSigner]
@@ -285,85 +338,329 @@ class SigningService:
         unsigned_signers.sort(key=lambda s: s.signing_order)
         return unsigned_signers[0]
 
-    def _render_generic_data_view(self, data: dict) -> str:
-        """Render arbitrary dict as a clean key-value HTML view."""
-        rows = self._render_dict_rows(data)
-        return f"""
-        <div class="document-data-view">
-            <dl class="data-grid">
-                {rows}
-            </dl>
+    def _get_property_address(self, contract_data: dict) -> str:
+        """Extract property address from contract data."""
+        mietobjekt = contract_data.get("mietobjekt", {})
+        strasse = mietobjekt.get("strasse", "")
+        hausnummer = mietobjekt.get("hausnummer", "")
+        plz = mietobjekt.get("plz", "")
+        ort = mietobjekt.get("ort", "")
+
+        if strasse and plz and ort:
+            return f"{strasse} {hausnummer}, {plz} {ort}"
+        return "Adresse nicht verfügbar"
+
+    def _format_date(self, date_str: Optional[str]) -> str:
+        """Format date string from YYYY-MM-DD to DD.MM.YYYY."""
+        if not date_str:
+            return "-"
+        try:
+            from datetime import datetime
+
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            return dt.strftime("%d.%m.%Y")
+        except (ValueError, TypeError):
+            return date_str
+
+    def _format_currency(self, amount: Optional[float]) -> str:
+        """Format amount as German currency."""
+        if amount is None:
+            return "-"
+        return f"{amount:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    def _render_html_from_contract_data(self, contract_data: dict) -> str:
+        """Render HTML contract from JSON data.
+
+        This generates a mobile-optimized HTML view of the contract
+        that replaces the slow PDF rendering.
+        """
+        # Extract data
+        vermieter = contract_data.get("vermieter", {})
+        mieter1 = contract_data.get("mieter1", {})
+        mieter2 = contract_data.get("mieter2")
+        mietobjekt = contract_data.get("mietobjekt", {})
+        mietzeit = contract_data.get("mietzeit", {})
+        miete = contract_data.get("miete", {})
+        kaution = contract_data.get("kaution", {})
+        bankverbindung = contract_data.get("bankverbindung", {})
+        vereinbarungen = contract_data.get("vereinbarungen", {})
+        metadata = contract_data.get("metadata", {})
+
+        # Format address helper
+        def format_address(addr: Optional[dict]) -> str:
+            if not addr:
+                return "-"
+            return f"{addr.get('strasse', '')} {addr.get('hausnummer', '')}, {addr.get('plz', '')} {addr.get('stadt', '')}"
+
+        # Build HTML
+        html = f"""
+        <div class="contract-document">
+            <header class="contract-header">
+                <h1>Mietvertrag über Wohnraum</h1>
+                <p class="contract-subtitle">nach den Vorschriften des Bürgerlichen Gesetzbuches</p>
+                {f'<p class="contract-number">Nr. {metadata.get("contract_number", "-")}</p>' if metadata.get("contract_number") else ""}
+            </header>
+
+            <section class="contract-section">
+                <h2>§ 1 VERMIETER</h2>
+                <dl class="info-grid">
+                    <div class="info-row"><dt>Name/Firma:</dt><dd>{vermieter.get("name", "-")}</dd></div>
+                    <div class="info-row"><dt>E-Mail:</dt><dd>{vermieter.get("email", "-")}</dd></div>
+                    {f'<div class="info-row"><dt>Telefon:</dt><dd>{vermieter.get("phone")}</dd></div>' if vermieter.get("phone") else ""}
+                    {f'<div class="info-row"><dt>Anschrift:</dt><dd>{vermieter.get("anschrift")}</dd></div>' if vermieter.get("anschrift") else ""}
+                </dl>
+            </section>
+
+            <section class="contract-section">
+                <h2>§ 2 MIETER</h2>
+                <h3>Mieter 1 (Hauptmieter):</h3>
+                <dl class="info-grid">
+                    <div class="info-row"><dt>Name:</dt><dd>{mieter1.get("vorname", "")} {mieter1.get("nachname", "")}</dd></div>
+                    <div class="info-row"><dt>Geburtsdatum:</dt><dd>{self._format_date(mieter1.get("geburtstag"))}</dd></div>
+                    <div class="info-row"><dt>E-Mail:</dt><dd>{mieter1.get("email", "-")}</dd></div>
+                    {f'<div class="info-row"><dt>Telefon:</dt><dd>{mieter1.get("telefon")}</dd></div>' if mieter1.get("telefon") else ""}
+                    <div class="info-row"><dt>Anschrift:</dt><dd>{format_address(mieter1.get("anschrift"))}</dd></div>
+                </dl>
+        """
+
+        # Add Mieter 2 if present
+        if mieter2:
+            html += f"""
+                <h3>Mieter 2:</h3>
+                <dl class="info-grid">
+                    <div class="info-row"><dt>Name:</dt><dd>{mieter2.get("vorname", "")} {mieter2.get("nachname", "")}</dd></div>
+                    <div class="info-row"><dt>Geburtsdatum:</dt><dd>{self._format_date(mieter2.get("geburtstag"))}</dd></div>
+                    <div class="info-row"><dt>E-Mail:</dt><dd>{mieter2.get("email", "-")}</dd></div>
+                    {f'<div class="info-row"><dt>Telefon:</dt><dd>{mieter2.get("telefon")}</dd></div>' if mieter2.get("telefon") else ""}
+                </dl>
+            """
+
+        html += """
+            </section>
+        """
+
+        # Mietobjekt section
+        property_address = f"{mietobjekt.get('strasse', '')} {mietobjekt.get('hausnummer', '')}, {mietobjekt.get('plz', '')} {mietobjekt.get('ort', '')}"
+        html += f"""
+            <section class="contract-section">
+                <h2>§ 3 MIETOBJEKT</h2>
+                <dl class="info-grid">
+                    {f'<div class="info-row"><dt>Liegenschaft:</dt><dd>{mietobjekt.get("liegenschaft")}</dd></div>' if mietobjekt.get("liegenschaft") else ""}
+                    <div class="info-row"><dt>Adresse:</dt><dd>{property_address}</dd></div>
+                    {f'<div class="info-row"><dt>Lage/Etage:</dt><dd>{mietobjekt.get("lage")}</dd></div>' if mietobjekt.get("lage") else ""}
+                    {f'<div class="info-row"><dt>Zimmeranzahl:</dt><dd>{mietobjekt.get("zimmer_anzahl")}</dd></div>' if mietobjekt.get("zimmer_anzahl") else ""}
+                    {f'<div class="info-row"><dt>Personenanzahl:</dt><dd>{mietobjekt.get("personenanzahl")}</dd></div>' if mietobjekt.get("personenanzahl") else ""}
+                    {f'<div class="info-row"><dt>Kellerraum:</dt><dd>Nr. {mietobjekt.get("kellerraum_nummer")}</dd></div>' if mietobjekt.get("kellerraum_nummer") else ""}
+                </dl>
+            </section>
+
+            <section class="contract-section">
+                <h2>§ 4 MIETZEIT</h2>
+                <dl class="info-grid">
+                    <div class="info-row"><dt>Mietbeginn:</dt><dd>{self._format_date(mietzeit.get("beginn"))}</dd></div>
+                    <div class="info-row"><dt>Befristet:</dt><dd>{"Ja" if mietzeit.get("befristet") else "Nein (unbefristet)"}</dd></div>
+                    {f'<div class="info-row"><dt>Mietende:</dt><dd>{self._format_date(mietzeit.get("ende"))}</dd></div>' if mietzeit.get("ende") else ""}
+                    {f'<div class="info-row"><dt>Mindestmietzeit:</dt><dd>{mietzeit.get("mindestmietzeit_monate")} Monate</dd></div>' if mietzeit.get("mindestmietzeit_monate") else ""}
+                </dl>
+            </section>
+
+            <section class="contract-section">
+                <h2>§ 5 MIETE UND NEBENKOSTEN</h2>
+                <dl class="info-grid">
+                    <div class="info-row"><dt>Nettokaltmiete:</dt><dd>{self._format_currency(miete.get("kaltmiete"))}</dd></div>
+                    <div class="info-row"><dt>Betriebskosten:</dt><dd>{self._format_currency(miete.get("betriebskosten"))}</dd></div>
+                    <div class="info-row"><dt>Heizkosten:</dt><dd>{self._format_currency(miete.get("heizkosten"))}</dd></div>
+                </dl>
+                <div class="total-box">
+                    <span class="total-label">GESAMTMIETE (monatlich):</span>
+                    <span class="total-value">{self._format_currency(miete.get("gesamtmiete"))}</span>
+                </div>
+            </section>
+
+            <section class="contract-section">
+                <h2>§ 6 KAUTION</h2>
+                <dl class="info-grid">
+                    <div class="info-row"><dt>Kautionsbetrag:</dt><dd class="font-bold">{self._format_currency(kaution.get("betrag"))}</dd></div>
+                </dl>
+                <p class="legal-note">Die Kaution ist gemäß § 551 BGB auf maximal drei Nettokaltmieten begrenzt.</p>
+            </section>
+
+            <section class="contract-section">
+                <h2>§ 7 BANKVERBINDUNG</h2>
+                <dl class="info-grid">
+                    <div class="info-row"><dt>Bank:</dt><dd>{bankverbindung.get("bank_name", "-")}</dd></div>
+                    <div class="info-row"><dt>IBAN:</dt><dd>{bankverbindung.get("iban", "-")}</dd></div>
+                    {f'<div class="info-row"><dt>BIC:</dt><dd>{bankverbindung.get("bic")}</dd></div>' if bankverbindung.get("bic") else ""}
+                    {f'<div class="info-row"><dt>Verwendungszweck:</dt><dd>{bankverbindung.get("verwendungszweck")}</dd></div>' if bankverbindung.get("verwendungszweck") else ""}
+                </dl>
+            </section>
+        """
+
+        # Vereinbarungen section if present
+        if vereinbarungen and (
+            vereinbarungen.get("besonderheiten") or vereinbarungen.get("sonstige")
+        ):
+            html += f"""
+            <section class="contract-section">
+                <h2>§ 8 SONSTIGE VEREINBARUNGEN</h2>
+                {f"<p>{vereinbarungen.get('besonderheiten')}</p>" if vereinbarungen.get("besonderheiten") else ""}
+                {f"<p>{vereinbarungen.get('sonstige')}</p>" if vereinbarungen.get("sonstige") else ""}
+            </section>
+            """
+
+        # Signature section
+        html += """
+            <section class="contract-section signature-section">
+                <h2>§ 9 UNTERSCHRIFTEN</h2>
+                <p class="signature-note">Mit der digitalen Unterschrift bestätigen alle Parteien die Richtigkeit der Angaben und stimmen den Vertragsbedingungen zu.</p>
+            </section>
         </div>
+
         <style>
-            .document-data-view {{
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                max-width: 800px;
+            .contract-document {
+                font-family: 'Georgia', 'Times New Roman', serif;
+                max-width: 52rem;
                 margin: 0 auto;
-                padding: 1rem;
-                color: #1f2937;
-            }}
-            .data-grid {{
+                background: white;
+                border-radius: 0.75rem;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+                border: 1px solid #e2e8f0;
+                padding: 2.5rem 2rem;
+                color: #1e293b;
+            }
+            @media (min-width: 640px) {
+                .contract-document { padding: 3rem 3.5rem; }
+            }
+            .contract-header {
+                text-align: center;
+                padding-bottom: 1.5rem;
+                margin-bottom: 2rem;
+                border-bottom: 2px solid #f59e0b;
+            }
+            .contract-header h1 {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 1rem;
+                font-weight: 700;
+                letter-spacing: 0.15em;
+                color: #1e293b;
+                text-transform: uppercase;
+                margin: 0 0 0.25rem 0;
+            }
+            .contract-subtitle {
+                font-size: 0.8rem;
+                color: #94a3b8;
+                font-style: italic;
+            }
+            .contract-number {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 0.75rem;
+                color: #94a3b8;
+                margin-top: 0.5rem;
+                letter-spacing: 0.05em;
+            }
+            .contract-section {
+                padding: 1.5rem 0;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            .contract-section:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+            .contract-section h2 {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin: 0 0 1rem 0;
+                padding-left: 0.75rem;
+                border-left: 3px solid #f59e0b;
+            }
+            .contract-section h3 {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: #475569;
+                margin: 1.25rem 0 0.75rem 0;
+            }
+            .info-grid {
                 display: flex;
                 flex-direction: column;
-                gap: 0.5rem;
-            }}
-            .data-row {{
+                gap: 0.625rem;
+            }
+            .info-row {
                 display: flex;
                 flex-wrap: wrap;
-                padding: 0.5rem 0;
-                border-bottom: 1px solid #e5e7eb;
-            }}
-            .data-row dt {{
-                width: 200px;
+                align-items: baseline;
+            }
+            .info-row dt {
+                width: 160px;
                 flex-shrink: 0;
-                color: #6b7280;
-                font-size: 0.875rem;
-            }}
-            .data-row dd {{
-                flex: 1;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 0.75rem;
                 font-weight: 500;
-                color: #1f2937;
+                color: #94a3b8;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+            .info-row dd {
+                flex: 1;
+                font-size: 0.9rem;
+                font-weight: 400;
+                color: #1e293b;
                 margin: 0;
-            }}
-            .data-section {{
-                margin-top: 1rem;
-                padding-top: 0.5rem;
-            }}
-            .data-section-title {{
-                font-size: 1rem;
+            }
+            .total-box {
+                margin-top: 1.25rem;
+                padding: 1rem 1.25rem;
+                background: #fffbeb;
+                border: 1px solid #fde68a;
+                border-radius: 0.5rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .total-label {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 0.8rem;
                 font-weight: 600;
-                color: #374151;
-                margin-bottom: 0.5rem;
-            }}
-            @media (max-width: 640px) {{
-                .data-row {{
-                    flex-direction: column;
-                }}
-                .data-row dt {{
-                    width: 100%;
-                    margin-bottom: 0.125rem;
-                }}
-            }}
+                color: #475569;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            .total-value {
+                font-size: 1.125rem;
+                font-weight: 700;
+                color: #b45309;
+            }
+            .legal-note {
+                margin-top: 0.75rem;
+                padding: 0.625rem 0.875rem;
+                background: #f8fafc;
+                border-left: 2px solid #cbd5e1;
+                border-radius: 0 0.25rem 0.25rem 0;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 0.75rem;
+                color: #64748b;
+                font-style: italic;
+            }
+            .signature-note {
+                font-size: 0.85rem;
+                color: #94a3b8;
+                font-style: italic;
+                line-height: 1.6;
+            }
+            .font-bold { font-weight: 600; }
+
+            @media (max-width: 640px) {
+                .contract-document { padding: 1.5rem 1.25rem; }
+                .info-row { flex-direction: column; gap: 0.125rem; }
+                .info-row dt { width: 100%; }
+                .total-box { flex-direction: column; gap: 0.375rem; text-align: center; }
+                .contract-section h2 { font-size: 0.7rem; }
+            }
         </style>
         """
 
-    def _render_dict_rows(self, data: dict, prefix: str = "") -> str:
-        """Recursively render dict keys as HTML rows."""
-        rows = []
-        for key, value in data.items():
-            label = key.replace("_", " ").title()
-            if prefix:
-                label = f"{prefix} - {label}"
-
-            if isinstance(value, dict):
-                rows.append(
-                    f'<div class="data-section"><div class="data-section-title">{label}</div></div>'
-                )
-                rows.append(self._render_dict_rows(value))
-            elif isinstance(value, list):
-                display = ", ".join(str(v) for v in value)
-                rows.append(f'<div class="data-row"><dt>{label}:</dt><dd>{display}</dd></div>')
-            else:
-                display = str(value) if value is not None else "-"
-                rows.append(f'<div class="data-row"><dt>{label}:</dt><dd>{display}</dd></div>')
-        return "\n".join(rows)
+        return html

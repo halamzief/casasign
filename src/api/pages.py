@@ -1,4 +1,4 @@
-"""Pages Router - Serves Jinja2 templates for signing flow."""
+"""FES Pages Router - Serves Jinja2 templates for signing flow."""
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
@@ -14,7 +14,7 @@ router = APIRouter(tags=["pages"])
 async def signing_page(request: Request, token: str) -> HTMLResponse:
     """Render the signing page for a given token.
 
-    The actual document data is loaded via API call from the frontend.
+    The actual contract data is loaded via API call from the frontend.
     """
     templates = request.app.state.templates
     return await templates.TemplateResponse(
@@ -22,6 +22,9 @@ async def signing_page(request: Request, token: str) -> HTMLResponse:
         {
             "request": request,
             "token": token,
+            "signer_name": "",  # Will be loaded via API
+            "property_address": "",  # Will be loaded via API
+            "kaution_betrag": None,  # Will be loaded via API
         },
     )
 
@@ -32,18 +35,35 @@ async def success_page(
     token: str,
     session: AsyncSession = Depends(get_db_session),
 ) -> HTMLResponse:
-    """Render the success page after signing."""
+    """Render the success page after signing.
+
+    Fetches contract data to display personalized success content.
+    """
     from src.core.repositories.signature_repository import SignatureRepository
 
     repo = SignatureRepository(session)
     templates = request.app.state.templates
 
-    signer_name = ""
+    # Try to get signer data for personalization
+    tenant_name = ""
+    property_address = ""
+    move_in_date = ""
+    consents = {}
 
     try:
+        # Get signer by token
         signer = await repo.get_signer_by_token(token)
         if signer:
-            signer_name = signer.name
+            tenant_name = signer.get("name", "")
+            # Get request data for property info
+            request_id = signer.get("signature_request_id")
+            if request_id:
+                sig_request = await repo.get_request_by_id(request_id)
+                if sig_request:
+                    property_address = sig_request.get("property_address", "")
+                    move_in_date = sig_request.get("move_in_date", "")
+                    # Get consents from signer metadata
+                    consents = signer.get("consents", {})
     except Exception:
         # Silently fail - show generic success page
         pass
@@ -53,7 +73,10 @@ async def success_page(
         {
             "request": request,
             "token": token,
-            "signer_name": signer_name,
+            "tenant_name": tenant_name,
+            "property_address": property_address,
+            "move_in_date": move_in_date,
+            "consents": consents,
         },
     )
 
@@ -64,17 +87,17 @@ async def home_page(request: Request) -> HTMLResponse:
     return HTMLResponse(
         content=f"""
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="de">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>{settings.service_name}</title>
+            <title>SignCasa Signatures</title>
             <script src="https://cdn.tailwindcss.com"></script>
         </head>
         <body class="bg-gray-50 min-h-screen flex items-center justify-center">
             <div class="text-center">
-                <h1 class="text-4xl font-bold text-gray-900 mb-4">{settings.service_name}</h1>
-                <p class="text-gray-600 mb-8">Digital document signature service</p>
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">SignCasa Signatures</h1>
+                <p class="text-gray-600 mb-8">FES-compliant digital signature service</p>
                 <div class="space-x-4">
                     <a href="/docs" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         API Documentation

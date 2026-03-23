@@ -6,15 +6,16 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.repositories.email_template_repository import EmailTemplateRepository
-from src.database.session import get_db_session
 from src.schemas.email import (
     EmailTemplateCreate,
     EmailTemplateResponse,
     EmailTemplateUpdate,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.database.session import get_db_session
 
 
 async def require_admin_key(x_admin_key: str = Header(...)) -> None:

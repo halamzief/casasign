@@ -22,15 +22,15 @@ class TokenValidationResponse(BaseModel):
     status: str  # pending, in_progress, completed, expired
 
     # Document mode
-    document_type: str = "pdf"  # 'pdf', 'json', or 'html'
+    document_type: str = "pdf"  # 'pdf' or 'json'
 
     # Contract content
     contract_html: str  # Rendered HTML content
     contract_data: Optional[dict] = (
         None  # Raw JSON data (JSON mode only, for client-side re-rendering)
     )
-    document_description: str = ""  # Document title/description for display
-    sender_name: str = ""  # Name of the person who sent the request
+    property_address: str  # For display
+    landlord_name: str
 
     # Metadata
     is_already_signed: bool
@@ -45,8 +45,16 @@ class ConsentSubmission(BaseModel):
     identity_confirmed: bool
     contract_reviewed: bool
 
-    # Service-specific additional consents (flexible dict)
-    additional_consents: Optional[dict] = None
+    # Optional - Insurance
+    deposit_insurance_consent: bool = False
+    tenant_liability_consent: bool = False
+    contents_insurance_consent: bool = False
+
+    # Optional - Utilities
+    energy_signup_consent: bool = False
+    internet_signup_consent: bool = False
+    utilities_reminder_consent: bool = False
+    moving_services_consent: bool = False
 
 
 class SignatureSubmission(BaseModel):

@@ -36,16 +36,14 @@ class SignatureRepository:
         document_pdf_base64: Optional[str] = None,
         contract_data: Optional[dict] = None,
         document_html: Optional[str] = None,
-        document_title: str = "Dokument",
+        document_title: Optional[str] = None,
         document_name: Optional[str] = None,
-        sender_name: str = "",
-        email_variables: Optional[dict] = None,
+        sender_name: Optional[str] = None,
         callback_url: Optional[str] = None,
         custom_email_template_id: Optional[UUID] = None,
         expires_in_days: int = 7,
     ) -> tuple[SignatureRequest, list[SignatureSigner]]:
         """Create signature request with signers."""
-        # Determine document type
         if document_html is not None:
             document_type = "html"
         elif contract_data is not None:
@@ -63,14 +61,14 @@ class SignatureRepository:
         try:
             request_id = uuid4()
 
-            if document_type == "pdf":
+            if document_type in ("json", "html"):
+                document_hash = None
+                document_url = None
+            else:
                 if not document_pdf_base64:
                     raise ValueError("document_pdf_base64 required for PDF mode")
                 document_hash = calculate_sha256_from_base64(document_pdf_base64)
                 document_url = await self._save_pdf(request_id, document_pdf_base64)
-            else:
-                document_hash = None
-                document_url = None
 
             # Create request row
             request_row = SignatureRequestRow(
@@ -84,7 +82,6 @@ class SignatureRepository:
                 document_title=document_title,
                 document_name=document_name,
                 sender_name=sender_name,
-                email_variables=email_variables,
                 requester_user_id=str(requester_user_id),
                 requester_email=requester_email,
                 tenant_id=str(tenant_id),
@@ -187,7 +184,7 @@ class SignatureRepository:
     async def update_request_pdf_generated(
         self, request_id: UUID, pdf_generated_at: datetime
     ) -> None:
-        """Update pdf_generated_at timestamp (JSON/HTML mode)."""
+        """Update pdf_generated_at timestamp (JSON mode)."""
         stmt = (
             update(SignatureRequestRow)
             .where(SignatureRequestRow.id == str(request_id))
@@ -246,12 +243,11 @@ class SignatureRepository:
             document_url=row.document_url,
             contract_data=row.contract_data,
             document_type=row.document_type,
-            document_html=row.document_html,
-            document_title=row.document_title,
-            document_name=row.document_name,
-            sender_name=row.sender_name,
-            email_variables=row.email_variables,
             pdf_generated_at=row.pdf_generated_at,
+            document_html=getattr(row, "document_html", None),
+            document_title=getattr(row, "document_title", None),
+            document_name=getattr(row, "document_name", None),
+            sender_name=getattr(row, "sender_name", None),
             status=row.status,
             expires_at=row.expires_at,
             created_at=row.created_at,

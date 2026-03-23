@@ -1,24 +1,20 @@
 /**
- * Signing Flow - Minimal fallback for consent modal data.
+ * Signing Flow Utilities
  *
- * The consent modal now uses inline Alpine.js x-data directly in the template.
- * This file provides a no-op fallback in case any legacy template references
- * the consentModalData function.
+ * Lightweight helpers for the signing page.
+ * Main logic lives in signingPageData() within signing_page.html.
  */
 
-window.consentModalData = function consentModalData() {
-    return {
-        identityConfirmed: false,
-        contractReviewed: false,
-        get canProceed() {
-            return this.identityConfirmed && this.contractReviewed;
-        },
-        handleSubmit() {
-            if (!this.canProceed) return;
-            this.$dispatch('consent-done', {
-                identity_confirmed: true,
-                contract_reviewed: true,
-            });
-        },
-    };
-};
+/**
+ * Format amount as German currency string.
+ * @param {number} amount
+ * @returns {string}
+ */
+function formatCurrencyDE(amount) {
+    return new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}

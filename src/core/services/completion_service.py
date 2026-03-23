@@ -19,7 +19,6 @@ from loguru import logger
 
 from src.config import Settings
 from src.models.signature_request import SignatureRequest, SignatureSigner
-
 from ..audit.audit_service import AuditService
 from ..pdf.audit_trail_generator import AuditTrailGenerator
 from ..pdf.html_to_pdf_service import HTMLToPDFService

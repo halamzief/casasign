@@ -1,55 +1,164 @@
-{# Consent Modal - Identity confirmation and document review #}
-<div x-data="{
-    identityConfirmed: false,
-    contractReviewed: false,
-    get canProceed() { return this.identityConfirmed && this.contractReviewed },
-    handleSubmit() {
-        if (!this.canProceed) return;
-        this.$dispatch('consent-done', { identity_confirmed: true, contract_reviewed: true });
-    }
-}" class="consent-modal">
+{# Consent Modal - Three-tier consent system with insurance/utility upsells #}
+<div x-data="consentModalData({
+    signerName: '{{ signer_name }}',
+    propertyAddress: '{{ property_address }}',
+    kautionBetrag: {{ kaution_betrag or 'null' }}
+})" x-init="init()" @consent-submitted.window="$dispatch('consent-done', $event.detail)" class="consent-modal">
     <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8">
         <!-- Header -->
         <div class="text-center mb-6">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center">
-                <i data-lucide="file-check" class="w-8 h-8 text-emerald-600"></i>
-            </div>
             <h2 class="text-2xl font-bold text-gray-900 mb-2">
-                Dokument prüfen und bestätigen
+                Ihre neue Wohnung ist fast bezugsfertig!
             </h2>
             <p class="text-gray-600">
-                Bitte bestätigen Sie die folgenden Punkte, um fortzufahren.
+                Wahlen Sie, welche Services Sie nutzen mochten
+            </p>
+        </div>
+
+        <!-- Tier Selection -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold mb-3">Schnellauswahl:</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <!-- Basis -->
+                <button type="button"
+                    @click="selectTier('basis')"
+                    :class="selectedTier === 'basis' ? 'border-blue-600 bg-blue-100' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'"
+                    class="p-4 border-2 rounded-lg text-center transition-all">
+                    <div class="font-semibold">Basis</div>
+                    <div class="text-sm text-gray-600">Nur unterschreiben</div>
+                </button>
+
+                <!-- Das Wichtigste -->
+                <button type="button"
+                    @click="selectTier('important')"
+                    :class="selectedTier === 'important' ? 'border-blue-600 bg-blue-100' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'"
+                    class="p-4 border-2 rounded-lg text-center transition-all">
+                    <div class="font-semibold">Das Wichtigste</div>
+                    <div class="text-sm text-gray-600">Versicherung + Anmeldungen</div>
+                </button>
+
+                <!-- Rundum-Service -->
+                <button type="button"
+                    @click="selectTier('full')"
+                    :class="selectedTier === 'full' ? 'border-blue-600 bg-blue-100' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'"
+                    class="p-4 border-2 rounded-lg text-center transition-all">
+                    <div class="font-semibold">Rundum-Service</div>
+                    <div class="text-sm text-gray-600">Alles inklusive</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Insurance Section -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+            <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                Versicherungsschutz
+            </h3>
+
+            <div class="space-y-2">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="depositInsurance" class="mt-1 w-5 h-5">
+                    <div class="flex-1">
+                        <div class="font-medium">Kautionsversicherung</div>
+                        <div class="text-sm text-gray-600">
+                            <template x-if="kautionBetrag">
+                                <span>Statt <span x-text="formatCurrency(kautionBetrag)"></span> Kaution nur <span x-text="insuranceCostMin"></span>-<span x-text="insuranceCostMax"></span> EUR/Monat zahlen</span>
+                            </template>
+                            <template x-if="!kautionBetrag">
+                                <span>Statt hoher Kaution nur geringe Monatsrate zahlen</span>
+                            </template>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="tenantLiability" class="mt-1 w-5 h-5">
+                    <div class="flex-1">
+                        <div class="font-medium">Haftpflichtversicherung</div>
+                        <div class="text-sm text-gray-600">Ab 5 EUR/Monat - Schutz bei Schaden</div>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="contentsInsurance" class="mt-1 w-5 h-5">
+                    <div class="flex-1">
+                        <div class="font-medium">Hausratversicherung (optional)</div>
+                        <div class="text-sm text-gray-600">Schutzt Ihr Eigentum in der Wohnung</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Utilities Section -->
+        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+            <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                Anmeldungen & Services
+            </h3>
+
+            <div class="space-y-2">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="energySignup" class="mt-1 w-5 h-5">
+                    <div class="flex-1">
+                        <div class="font-medium">Strom & Gas (+300 EUR Wechselbonus)</div>
+                        <div class="text-sm text-gray-600">Beste Tarife vergleichen und anmelden</div>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="internetSignup" class="mt-1 w-5 h-5">
+                    <div class="flex-1">
+                        <div class="font-medium">Internet & Telefon</div>
+                        <div class="text-sm text-gray-600">Schnellcheck verfugbarer Anbieter</div>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="utilitiesReminder" class="mt-1 w-5 h-5">
+                    <div class="flex-1">
+                        <div class="font-medium">Zahlerstand-Erinnerung</div>
+                        <div class="text-sm text-gray-600">Automatische Erinnerung zum Ablesen</div>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="movingServices" class="mt-1 w-5 h-5">
+                    <div class="flex-1">
+                        <div class="font-medium">Umzugsservice-Vergleich (optional)</div>
+                        <div class="text-sm text-gray-600">Bis zu 40% sparen bei Umzugsunternehmen</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Value Proposition -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <p class="text-sm text-center">
+                <strong>Spart Ihnen ~4 Stunden + bis zu 500 EUR</strong><br>
+                12.847 Mieter haben bereits unterschrieben
             </p>
         </div>
 
         <!-- Required Consents -->
-        <div class="space-y-4 mb-8">
-            <label class="flex items-start gap-3 cursor-pointer p-4 rounded-lg border-2 transition-colors"
-                :class="identityConfirmed ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'">
-                <input type="checkbox" x-model="identityConfirmed"
-                    class="mt-0.5 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" required>
-                <div class="flex-1">
-                    <div class="font-medium text-gray-900">
-                        Ich bestätige meine Identität als
-                        <strong x-text="contractData?.signer_name || ''"></strong>
+        <div class="border-t pt-4 mb-4">
+            <h3 class="font-semibold mb-3">Pflichtfelder:</h3>
+            <div class="space-y-2">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="identityConfirmed" class="mt-1 w-5 h-5" required>
+                    <div class="flex-1">
+                        Ich bin <strong x-text="signerName"></strong> und bestatige meine Identitat
                     </div>
-                </div>
-            </label>
+                </label>
 
-            <label class="flex items-start gap-3 cursor-pointer p-4 rounded-lg border-2 transition-colors"
-                :class="contractReviewed ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'">
-                <input type="checkbox" x-model="contractReviewed"
-                    class="mt-0.5 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" required>
-                <div class="flex-1">
-                    <div class="font-medium text-gray-900">
-                        Ich habe das Dokument gelesen und verstanden
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" x-model="contractReviewed" class="mt-1 w-5 h-5" required>
+                    <div class="flex-1">
+                        Ich habe den Vertrag fur <strong x-text="propertyAddress"></strong> gelesen und verstanden
                     </div>
-                </div>
-            </label>
+                </label>
+            </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-3">
+        <div class="flex gap-3">
             <a href="/datenschutz" target="_blank" class="text-sm text-gray-600 hover:text-gray-900">
                 Datenschutz
             </a>
@@ -57,9 +166,9 @@
             <button type="button"
                 @click="handleSubmit()"
                 :disabled="!canProceed"
-                :class="!canProceed ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-700'"
-                class="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold transition-colors btn-touch">
-                Weiter zur Unterschrift
+                :class="!canProceed ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'"
+                class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold transition-colors btn-touch">
+                Services aktivieren & unterschreiben
             </button>
         </div>
     </div>

@@ -1,80 +1,233 @@
 {% extends "base.html" %}
 
-{% block title %}Unterschrift erfolgreich - CasaSign{% endblock %}
+{% block title %}Unterschrift erfolgreich - SignCasa{% endblock %}
 
 {% block head %}
 <meta name="robots" content="noindex">
 {% endblock %}
 
 {% block styles %}
-.success-page {
-    min-height: 100vh;
-    background: linear-gradient(to bottom, #ecfdf5, white);
-    padding: 2rem 1rem;
-}
-.success-card {
-    max-width: 32rem;
-    margin: 0 auto;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    padding: 2.5rem 2rem;
-}
-.checkmark-circle {
-    width: 5rem;
-    height: 5rem;
-    border-radius: 50%;
-    background-color: #d1fae5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-}
-.info-box {
-    background-color: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 0.75rem;
-    padding: 1rem 1.25rem;
-}
+.success-popup { min-height: 100vh; background: linear-gradient(to bottom, #ecfdf5, white); padding: 2rem 1rem; }
+.popup-content { max-width: 42rem; margin: 0 auto; background: white; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); padding: 2rem; }
+.countdown-banner { background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 0.75rem; padding: 1rem; text-align: center; }
+.checklist { background-color: #f9fafb; border-radius: 0.75rem; padding: 1.5rem; }
+.check-icon { width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; }
+.check-icon.done { background-color: #d1fae5; color: #059669; }
+.check-icon.pending { background-color: #e5e7eb; color: #9ca3af; }
+.services-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+@media (min-width: 768px) { .services-grid { grid-template-columns: repeat(2, 1fr); } }
+.service-card { display: flex; flex-direction: column; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; transition: all 0.2s; cursor: pointer; text-decoration: none; }
+.service-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #6ee7b7; }
+.service-card.highlight { border-color: #a7f3d0; background-color: #ecfdf5; }
+.reminder-card { background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.75rem; padding: 1rem; }
 {% endblock %}
 
 {% block body %}
-<div class="success-page">
-    <div class="success-card">
-        <!-- Header -->
-        <div class="text-center mb-6">
-            <div class="checkmark-circle">
-                <i data-lucide="check" class="w-10 h-10 text-emerald-600"></i>
-            </div>
-            <h1 class="text-2xl font-bold text-gray-900 mb-2">
-                Erfolgreich unterschrieben!
+<div class="success-popup" x-data="successPageData()">
+    <div class="popup-content">
+        <!-- Header with celebration -->
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">ERFOLG!</div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                Herzlichen Gluckwunsch{% if tenant_name %}, {{ tenant_name.split(' ')[0] }}{% endif %}!
             </h1>
-            <p class="text-gray-600">
-                Ihr Dokument wurde erfolgreich digital unterschrieben.
+            <p class="text-xl text-gray-600">
+                Ihr Mietvertrag ist unterschrieben.
             </p>
+            {% if property_address %}
+            <p class="text-gray-500 mt-2">
+                {{ property_address }}
+            </p>
+            {% endif %}
         </div>
 
-        <!-- Personal greeting -->
-        {% if signer_name %}
-        <p class="text-center text-lg text-gray-700 mb-6">
-            Vielen Dank, <strong>{{ signer_name.split(' ')[0] }}</strong>!
-        </p>
+        <!-- Move-in countdown -->
+        {% if move_in_date %}
+        <div class="countdown-banner mb-6" x-data="{ days: calculateDaysUntil('{{ move_in_date }}') }" x-show="days !== null">
+            <div class="text-2xl font-bold text-emerald-700" x-text="days"></div>
+            <div class="text-sm text-emerald-600">Tage bis zum Einzug</div>
+        </div>
         {% endif %}
 
-        <!-- Info box -->
-        <div class="info-box mb-6">
-            <div class="flex items-start gap-3">
-                <i data-lucide="mail" class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0"></i>
-                <p class="text-sm text-emerald-800">
-                    Alle Beteiligten erhalten eine Bestätigung per E-Mail.
-                </p>
+        <!-- Next Steps Checklist -->
+        <div class="checklist mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                Was Sie jetzt tun sollten:
+            </h2>
+            <ul class="space-y-3">
+                <li class="flex items-center gap-3">
+                    <span class="check-icon done">OK</span>
+                    <span>Bestatigung per E-Mail erhalten</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="check-icon pending">O</span>
+                    <span>Strom & Gas anmelden</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="check-icon pending">O</span>
+                    <span>Internet einrichten lassen</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="check-icon pending">O</span>
+                    <span class="text-amber-700 font-medium">
+                        Ummeldung beim Amt (innerhalb 2 Wochen nach Einzug!)
+                    </span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                Jetzt Zeit und Geld sparen:
+            </h3>
+            <div class="services-grid">
+                <!-- Strom & Gas -->
+                {% if consents.get('energy_signup_consent', True) %}
+                <a href="https://www.check24.de/strom/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature&address={{ property_address | urlencode }}"
+                   target="_blank" rel="noopener noreferrer" class="service-card highlight">
+                    <div class="text-3xl mb-2">Blitz</div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Strom & Gas anmelden</h4>
+                        <p class="text-sm text-gray-600">Bis zu 300 EUR Wechselbonus</p>
+                    </div>
+                    <span class="text-emerald-600 text-sm font-medium mt-2">Jetzt vergleichen</span>
+                </a>
+                {% endif %}
+
+                <!-- Internet -->
+                {% if consents.get('internet_signup_consent', True) %}
+                <a href="https://www.check24.de/dsl/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature&address={{ property_address | urlencode }}"
+                   target="_blank" rel="noopener noreferrer" class="service-card highlight">
+                    <div class="text-3xl mb-2">Signal</div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Internet einrichten</h4>
+                        <p class="text-sm text-gray-600">Beste Tarife fur Ihre neue Adresse</p>
+                    </div>
+                    <span class="text-emerald-600 text-sm font-medium mt-2">Verfugbarkeit prufen</span>
+                </a>
+                {% endif %}
+
+                <!-- Umzug -->
+                {% if consents.get('moving_services_consent', True) %}
+                <a href="https://www.check24.de/umzug/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature"
+                   target="_blank" rel="noopener noreferrer" class="service-card">
+                    <div class="text-3xl mb-2">Paket</div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Umzugshelfer finden</h4>
+                        <p class="text-sm text-gray-600">Bis zu 40% sparen</p>
+                    </div>
+                    <span class="text-emerald-600 text-sm font-medium mt-2">Angebote vergleichen</span>
+                </a>
+                {% endif %}
+
+                <!-- Haftpflicht -->
+                {% if consents.get('tenant_liability_consent', True) %}
+                <a href="https://www.check24.de/haftpflichtversicherung/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature"
+                   target="_blank" rel="noopener noreferrer" class="service-card">
+                    <div class="text-3xl mb-2">Schild</div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Haftpflichtversicherung</h4>
+                        <p class="text-sm text-gray-600">Schutz ab 3 EUR/Monat</p>
+                    </div>
+                    <span class="text-emerald-600 text-sm font-medium mt-2">Mehr erfahren</span>
+                </a>
+                {% endif %}
             </div>
         </div>
 
+        <!-- Ummeldung Reminder Card -->
+        <div class="reminder-card mb-6">
+            <div class="flex items-start gap-4">
+                <span class="text-3xl">Dokument</span>
+                <div>
+                    <h4 class="font-semibold text-blue-900">Wichtig: Ummeldung nicht vergessen!</h4>
+                    <p class="text-sm text-blue-800 mt-1">
+                        Sie mussen sich innerhalb von 2 Wochen nach dem Einzug beim
+                        Einwohnermeldeamt ummelden. Bringen Sie Ihren Personalausweis und
+                        die Wohnungsgeberbescheinigung mit.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Reminder Option -->
+        <div class="text-center mb-6" x-data="{ showForm: false, email: '', sent: false }">
+            <template x-if="!showForm && !sent">
+                <button type="button" @click="showForm = true"
+                    class="text-emerald-600 hover:text-emerald-700 underline text-sm">
+                    Links per E-Mail zusenden
+                </button>
+            </template>
+            <template x-if="showForm && !sent">
+                <div class="flex gap-2 justify-center">
+                    <input type="email" x-model="email" placeholder="Ihre E-Mail-Adresse"
+                        class="px-4 py-2 border rounded-lg text-sm w-64">
+                    <button type="button" @click="sent = true; showForm = false"
+                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">
+                        Senden
+                    </button>
+                </div>
+            </template>
+            <template x-if="sent">
+                <p class="text-emerald-600 text-sm">Wir senden Ihnen die Links per E-Mail!</p>
+            </template>
+        </div>
+
+        <!-- Disclaimer -->
+        <p class="text-xs text-gray-400 text-center">
+            Diese Empfehlungen sind kostenlos fur Sie. SignCasa erhalt ggf. eine Provision von Partnern.
+        </p>
+
         <!-- Close hint -->
-        <p class="text-sm text-gray-500 text-center">
-            Sie können dieses Fenster jetzt schließen.
+        <p class="text-sm text-gray-500 text-center mt-4">
+            Sie konnen dieses Fenster jetzt schliessen.
         </p>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function successPageData() {
+    return {
+        // Helper to calculate days until move-in
+        calculateDaysUntil(dateStr) {
+            if (!dateStr) return null;
+            try {
+                // Parse DD.MM.YYYY format
+                const parts = dateStr.split('.');
+                if (parts.length === 3) {
+                    const date = new Date(parts[2], parts[1] - 1, parts[0]);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const diff = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+                    return diff > 0 ? diff : null;
+                }
+            } catch {
+                return null;
+            }
+            return null;
+        }
+    };
+}
+
+// Also expose for x-data usage
+function calculateDaysUntil(dateStr) {
+    if (!dateStr) return null;
+    try {
+        const parts = dateStr.split('.');
+        if (parts.length === 3) {
+            const date = new Date(parts[2], parts[1] - 1, parts[0]);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diff = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+            return diff > 0 ? diff : null;
+        }
+    } catch {
+        return null;
+    }
+    return null;
+}
+</script>
 {% endblock %}

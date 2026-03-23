@@ -7,6 +7,131 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 # =============================================================================
+# Contract Data Schemas (for JSON-to-HTML mode)
+# =============================================================================
+
+
+class ContractMetadataSchema(BaseModel):
+    """Metadata about the contract."""
+
+    contract_id: str
+    contract_number: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class VermieterSchema(BaseModel):
+    """Landlord (Vermieter) data."""
+
+    name: str = ""
+    email: Optional[EmailStr] = None  # Optional - may not be set yet
+    phone: Optional[str] = None
+    anschrift: Optional[str] = None
+
+
+class AnschriftSchema(BaseModel):
+    """Address schema."""
+
+    strasse: str
+    hausnummer: str
+    plz: str
+    stadt: str
+
+
+class MieterSchema(BaseModel):
+    """Tenant (Mieter) data."""
+
+    vorname: str = ""
+    nachname: str = ""
+    geburtstag: Optional[str] = None  # YYYY-MM-DD
+    email: Optional[EmailStr] = None  # Optional - contract may not have email yet
+    telefon: Optional[str] = None
+    anschrift: Optional[AnschriftSchema] = None
+
+
+class StellplatzSchema(BaseModel):
+    """Parking space data."""
+
+    typ: str  # aussenstellplatz, tiefgarage, garage, kein_stellplatz
+    nummer: Optional[str] = None
+
+
+class MietobjektSchema(BaseModel):
+    """Property (Mietobjekt) data."""
+
+    liegenschaft: Optional[str] = None
+    strasse: str = ""
+    hausnummer: str = ""
+    plz: str = ""
+    ort: str = ""
+    lage: Optional[str] = None  # Floor/unit
+    zimmer_anzahl: Optional[int] = None
+    personenanzahl: Optional[int] = None
+    stellplatz: Optional[StellplatzSchema] = None
+    kellerraum_nummer: Optional[str] = None
+
+
+class MietzeitSchema(BaseModel):
+    """Rental period data."""
+
+    beginn: str = ""  # YYYY-MM-DD - default empty if not set
+    ende: Optional[str] = None  # YYYY-MM-DD (null = unlimited)
+    mindestmietzeit_monate: Optional[int] = None
+    befristet: bool = False
+    besichtigungsdatum: Optional[str] = None
+
+
+class MieteSchema(BaseModel):
+    """Rent data."""
+
+    kaltmiete: float
+    betriebskosten: float = 0.0
+    heizkosten: float = 0.0
+    gesamtmiete: float
+
+
+class KautionSchema(BaseModel):
+    """Security deposit data."""
+
+    betrag: float
+
+
+class BankverbindungSchema(BaseModel):
+    """Bank account data."""
+
+    bank_name: str = ""
+    iban: str = ""
+    bic: Optional[str] = None
+    verwendungszweck: Optional[str] = None
+
+
+class VereinbarungenSchema(BaseModel):
+    """Other agreements."""
+
+    besonderheiten: Optional[str] = None
+    sonstige: Optional[str] = None
+
+
+class ContractDataSchema(BaseModel):
+    """Complete contract data for JSON-to-HTML rendering.
+
+    This replaces the need for uploading a PDF upfront.
+    The contract is rendered as HTML for the signer and
+    converted to PDF only after all signatures are collected.
+    """
+
+    metadata: ContractMetadataSchema
+    vermieter: VermieterSchema
+    mieter1: MieterSchema
+    mieter2: Optional[MieterSchema] = None
+    mietobjekt: MietobjektSchema
+    mietzeit: MietzeitSchema
+    miete: MieteSchema
+    kaution: KautionSchema
+    bankverbindung: BankverbindungSchema
+    vereinbarungen: Optional[VereinbarungenSchema] = None
+
+
+# =============================================================================
 # Signer Schemas
 # =============================================================================
 
@@ -17,7 +142,7 @@ class SignerCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=255)
     email: EmailStr
     phone: Optional[str] = Field(None, max_length=20)
-    role: str = Field(..., max_length=50)  # Any string role (e.g. sender, signer, witness)
+    role: str = Field(..., max_length=50)  # landlord, tenant_1, tenant_2, witness
     signing_order: int = Field(..., ge=1, le=10)
     verification_method: str = Field(default="email_link")
 
@@ -29,36 +154,42 @@ class SignerCreate(BaseModel):
             raise ValueError("verification_method must be 'email_link' or 'whatsapp_link'")
         return v
 
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: str) -> str:
+        """Validate role."""
+        allowed_roles = ["landlord", "tenant_1", "tenant_2", "tenant_3", "witness", "guarantor"]
+        if v not in allowed_roles:
+            raise ValueError(f"role must be one of: {', '.join(allowed_roles)}")
+        return v
+
 
 class SignatureRequestCreate(BaseModel):
     """Schema for creating a signature request.
 
     Supports three document modes:
-    1. PDF mode: Provide document_pdf_base64
-    2. JSON mode: Provide contract_data (dict)
-    3. HTML mode: Provide document_html
+    1. PDF mode (legacy): Provide document_pdf_base64
+    2. JSON mode: Provide contract_data for server-side HTML rendering
+    3. HTML mode: Provide document_html with pre-rendered HTML from caller
     """
 
     contract_id: UUID
-    # PDF mode - base64-encoded PDF document
+    # PDF mode (legacy) - base64-encoded PDF document
     document_pdf_base64: Optional[str] = Field(
         None, description="Base64-encoded PDF document (PDF mode)"
     )
-    # JSON mode - arbitrary data dict for key-value HTML rendering
-    contract_data: Optional[dict] = Field(
-        None, description="Arbitrary data dict for HTML rendering (JSON mode)"
+    # JSON mode - contract data for HTML rendering
+    contract_data: Optional[ContractDataSchema] = Field(
+        None, description="Contract data for HTML rendering (JSON mode)"
     )
-    # HTML mode - pre-rendered HTML content
+    # HTML mode - pre-rendered HTML from caller
     document_html: Optional[str] = Field(
         None, description="Pre-rendered HTML document content (HTML mode)"
     )
-    # Generic document metadata
-    document_title: str = Field(default="Dokument", max_length=500)
-    document_name: Optional[str] = Field(None, max_length=255)
-    sender_name: str = Field(default="", max_length=255)
-    email_variables: Optional[dict] = Field(
-        None, description="Custom variables for email templates"
-    )
+    # Document metadata
+    document_title: Optional[str] = Field(None, description="Document title for display")
+    document_name: Optional[str] = Field(None, description="Document filename")
+    sender_name: Optional[str] = Field(None, description="Name of the sender/requester")
     # Requester info - REQUIRED (database has NOT NULL constraints)
     requester_user_id: UUID = Field(..., description="UUID of the user requesting the signature")
     requester_email: EmailStr = Field(..., description="Email of the requester")
@@ -70,20 +201,16 @@ class SignatureRequestCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_document_source(self) -> "SignatureRequestCreate":
-        """Ensure at least one document source is provided."""
+        """Ensure exactly one document source is provided."""
         has_pdf = self.document_pdf_base64 is not None
         has_json = self.contract_data is not None
         has_html = self.document_html is not None
-
         sources = sum([has_pdf, has_json, has_html])
+
         if sources > 1:
-            raise ValueError(
-                "Provide only one of: document_pdf_base64, contract_data, or document_html"
-            )
+            raise ValueError("Provide only one of: document_pdf_base64, contract_data, document_html")
         if sources == 0:
-            raise ValueError(
-                "Must provide one of: document_pdf_base64, contract_data, or document_html"
-            )
+            raise ValueError("Must provide one of: document_pdf_base64, contract_data, or document_html")
 
         return self
 
@@ -121,8 +248,8 @@ class SignatureRequestResponse(BaseModel):
 
     id: UUID
     contract_id: UUID
-    document_hash: Optional[str] = None  # Nullable for JSON/HTML mode
-    document_type: str = "pdf"  # 'pdf', 'json', or 'html'
+    document_hash: Optional[str] = None  # Nullable for JSON mode
+    document_type: str = "pdf"  # 'pdf' or 'json'
     status: str
     signers: list[SignerResponse]
     expires_at: datetime

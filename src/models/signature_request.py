@@ -11,7 +11,7 @@ class SignatureRequest:
     Supports three document modes:
     - PDF mode (document_type='pdf'): Uses document_url and document_hash
     - JSON mode (document_type='json'): Uses contract_data, generates PDF at completion
-    - HTML mode (document_type='html'): Uses document_html, generates PDF at completion
+    - HTML mode (document_type='html'): Uses document_html, pre-rendered by caller
     """
 
     def __init__(
@@ -21,7 +21,7 @@ class SignatureRequest:
         requester_user_id: UUID,
         requester_email: str,
         tenant_id: UUID,
-        # Document fields - nullable for JSON/HTML mode
+        # Document fields - nullable for JSON mode
         document_hash: Optional[str] = None,
         document_url: Optional[str] = None,
         # JSON mode fields
@@ -30,11 +30,10 @@ class SignatureRequest:
         pdf_generated_at: Optional[datetime] = None,
         # HTML mode fields
         document_html: Optional[str] = None,
-        # Generic document metadata
-        document_title: str = "Dokument",
+        # Metadata
+        document_title: Optional[str] = None,
         document_name: Optional[str] = None,
-        sender_name: str = "",
-        email_variables: Optional[dict] = None,
+        sender_name: Optional[str] = None,
         # Status tracking
         status: str = "pending",
         expires_at: Optional[datetime] = None,
@@ -55,7 +54,6 @@ class SignatureRequest:
         self.document_title = document_title
         self.document_name = document_name
         self.sender_name = sender_name
-        self.email_variables = email_variables
         self.requester_user_id = requester_user_id
         self.requester_email = requester_email
         self.tenant_id = tenant_id
@@ -71,11 +69,6 @@ class SignatureRequest:
         """Check if this request uses JSON-to-HTML mode."""
         return self.document_type == "json"
 
-    @property
-    def is_html_mode(self) -> bool:
-        """Check if this request uses pre-rendered HTML mode."""
-        return self.document_type == "html"
-
     def to_dict(self) -> dict:
         """Convert model to dictionary."""
         return {
@@ -85,11 +78,6 @@ class SignatureRequest:
             "document_url": self.document_url,
             "contract_data": self.contract_data,
             "document_type": self.document_type,
-            "document_html": self.document_html,
-            "document_title": self.document_title,
-            "document_name": self.document_name,
-            "sender_name": self.sender_name,
-            "email_variables": self.email_variables,
             "pdf_generated_at": (
                 self.pdf_generated_at.isoformat() if self.pdf_generated_at else None
             ),

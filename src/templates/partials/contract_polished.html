@@ -1,0 +1,361 @@
+{# Polished Contract Preview - Paper-like rendering for signing flow #}
+{% set metadata = contract_data.get('metadata', {}) %}
+{% set vermieter = contract_data.get('vermieter', {}) %}
+{% set mieter1 = contract_data.get('mieter1', {}) %}
+{% set mieter2 = contract_data.get('mieter2') %}
+{% set mietobjekt = contract_data.get('mietobjekt', {}) %}
+{% set mietzeit = contract_data.get('mietzeit', {}) %}
+{% set miete = contract_data.get('miete', {}) %}
+{% set kaution = contract_data.get('kaution', {}) %}
+{% set bankverbindung = contract_data.get('bankverbindung', {}) %}
+{% set vereinbarungen = contract_data.get('vereinbarungen') %}
+
+{% macro format_date(date_str) %}
+{%- if date_str %}{{ date_str[8:10] }}.{{ date_str[5:7] }}.{{ date_str[0:4] }}{% else %}-{% endif -%}
+{% endmacro %}
+
+{% macro format_currency(amount) %}
+{%- if amount is not none %}{{ "{:,.2f}".format(amount).replace(",", "X").replace(".", ",").replace("X", ".") }} EUR{% else %}-{% endif -%}
+{% endmacro %}
+
+{% macro format_iban(iban) %}
+{%- if iban %}{{ iban | replace(" ", "") | batch(4) | map('join') | join(' ') }}{% else %}-{% endif -%}
+{% endmacro %}
+
+{# Renders a single info row #}
+{% macro info_row(label, value) %}
+{% if value %}
+<div class="cp-row">
+    <dt>{{ label }}</dt>
+    <dd>{{ value }}</dd>
+</div>
+{% endif %}
+{% endmacro %}
+
+<article class="cp-document" role="document" aria-label="Mietvertrag">
+    <style>
+        /* === Contract Polished (cp-) === */
+        .cp-document {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            max-width: 52rem;
+            margin: 0 auto;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .cp-inner {
+            padding: 2.5rem 2rem;
+        }
+        @media (min-width: 640px) {
+            .cp-inner { padding: 3rem 3.5rem; }
+        }
+
+        /* Header */
+        .cp-header {
+            text-align: center;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #f59e0b;
+        }
+        .cp-header h1 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: #1e293b;
+            text-transform: uppercase;
+            margin: 0 0 0.25rem 0;
+        }
+        .cp-header .cp-subtitle {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .cp-header .cp-number {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* Sections */
+        .cp-section {
+            padding: 1.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .cp-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .cp-section h2 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0 0 1rem 0;
+            padding-left: 0.75rem;
+            border-left: 3px solid #f59e0b;
+        }
+        .cp-section h3 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #475569;
+            margin: 1.25rem 0 0.75rem 0;
+        }
+
+        /* Info Grid */
+        .cp-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+        .cp-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+        }
+        .cp-row dt {
+            width: 160px;
+            flex-shrink: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .cp-row dd {
+            flex: 1;
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        /* Financial Total */
+        .cp-total {
+            margin-top: 1.25rem;
+            padding: 1rem 1.25rem;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cp-total-label {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .cp-total-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #b45309;
+        }
+
+        /* Legal Note */
+        .cp-legal-note {
+            margin-top: 0.75rem;
+            padding: 0.625rem 0.875rem;
+            background: #f8fafc;
+            border-left: 2px solid #cbd5e1;
+            border-radius: 0 0.25rem 0.25rem 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        /* Signature Note */
+        .cp-sig-note {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        /* Special Values */
+        .cp-bold { font-weight: 600; }
+        .cp-mono {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.03em;
+        }
+        .cp-preformatted {
+            white-space: pre-wrap;
+            font-size: 0.85rem;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+            .cp-inner { padding: 1.5rem 1.25rem; }
+            .cp-row { flex-direction: column; gap: 0.125rem; }
+            .cp-row dt { width: 100%; }
+            .cp-total { flex-direction: column; gap: 0.375rem; text-align: center; }
+            .cp-section h2 { font-size: 0.7rem; }
+        }
+    </style>
+
+    <div class="cp-inner">
+        <!-- Header -->
+        <header class="cp-header">
+            <h1>Mietvertrag über Wohnraum</h1>
+            <p class="cp-subtitle">nach den Vorschriften des Bürgerlichen Gesetzbuches</p>
+            {% if metadata.contract_number %}
+                <p class="cp-number">Nr. {{ metadata.contract_number }}</p>
+            {% endif %}
+        </header>
+
+        <!-- § 1 Vermieter -->
+        <section class="cp-section" aria-labelledby="s-vermieter">
+            <h2 id="s-vermieter">§ 1 Vermieter</h2>
+            <dl class="cp-grid">
+                {{ info_row('Name / Firma', vermieter.name) }}
+                {{ info_row('E-Mail', vermieter.email) }}
+                {{ info_row('Telefon', vermieter.phone) }}
+                {{ info_row('Anschrift', vermieter.anschrift) }}
+            </dl>
+        </section>
+
+        <!-- § 2 Mieter -->
+        <section class="cp-section" aria-labelledby="s-mieter">
+            <h2 id="s-mieter">§ 2 Mieter</h2>
+
+            <h3>Mieter 1 (Hauptmieter)</h3>
+            <dl class="cp-grid">
+                {{ info_row('Name', (mieter1.vorname or '') ~ ' ' ~ (mieter1.nachname or '')) }}
+                {{ info_row('Geburtsdatum', format_date(mieter1.geburtstag)) }}
+                {{ info_row('E-Mail', mieter1.email) }}
+                {{ info_row('Telefon', mieter1.telefon) }}
+                {% if mieter1.anschrift %}
+                {{ info_row('Anschrift', (mieter1.anschrift.strasse or '') ~ ' ' ~ (mieter1.anschrift.hausnummer or '') ~ ', ' ~ (mieter1.anschrift.plz or '') ~ ' ' ~ (mieter1.anschrift.stadt or mieter1.anschrift.ort or '')) }}
+                {% endif %}
+            </dl>
+
+            {% if mieter2 %}
+            <h3>Mieter 2</h3>
+            <dl class="cp-grid">
+                {{ info_row('Name', (mieter2.vorname or '') ~ ' ' ~ (mieter2.nachname or '')) }}
+                {{ info_row('Geburtsdatum', format_date(mieter2.geburtstag)) }}
+                {{ info_row('E-Mail', mieter2.email) }}
+                {{ info_row('Telefon', mieter2.telefon) }}
+            </dl>
+            {% endif %}
+        </section>
+
+        <!-- § 3 Mietobjekt -->
+        <section class="cp-section" aria-labelledby="s-mietobjekt">
+            <h2 id="s-mietobjekt">§ 3 Mietobjekt</h2>
+            <dl class="cp-grid">
+                {{ info_row('Liegenschaft', mietobjekt.liegenschaft) }}
+                {{ info_row('Adresse', (mietobjekt.strasse or '') ~ ' ' ~ (mietobjekt.hausnummer or '') ~ ', ' ~ (mietobjekt.plz or '') ~ ' ' ~ (mietobjekt.ort or '')) }}
+                {{ info_row('Lage / Etage', mietobjekt.lage) }}
+                {{ info_row('Zimmeranzahl', mietobjekt.zimmer_anzahl) }}
+                {{ info_row('Personenanzahl', mietobjekt.personenanzahl) }}
+                {% if mietobjekt.stellplatz %}
+                {{ info_row('Stellplatz', mietobjekt.stellplatz.typ ~ (' (Nr. ' ~ mietobjekt.stellplatz.nummer ~ ')' if mietobjekt.stellplatz.nummer else '')) }}
+                {% endif %}
+                {{ info_row('Kellerraum', 'Nr. ' ~ mietobjekt.kellerraum_nummer if mietobjekt.kellerraum_nummer else None) }}
+            </dl>
+        </section>
+
+        <!-- § 4 Mietzeit -->
+        <section class="cp-section" aria-labelledby="s-mietzeit">
+            <h2 id="s-mietzeit">§ 4 Mietzeit</h2>
+            <dl class="cp-grid">
+                {{ info_row('Mietbeginn', format_date(mietzeit.beginn)) }}
+                <div class="cp-row">
+                    <dt>Befristet</dt>
+                    <dd>{% if mietzeit.befristet %}Ja{% else %}Nein (unbefristet){% endif %}</dd>
+                </div>
+                {% if mietzeit.ende %}
+                {{ info_row('Mietende', format_date(mietzeit.ende)) }}
+                {% endif %}
+                {% if mietzeit.mindestmietzeit_monate %}
+                {{ info_row('Mindestmietzeit', mietzeit.mindestmietzeit_monate ~ ' Monate') }}
+                {% endif %}
+            </dl>
+        </section>
+
+        <!-- § 5 Miete und Nebenkosten -->
+        <section class="cp-section" aria-labelledby="s-miete">
+            <h2 id="s-miete">§ 5 Miete und Nebenkosten</h2>
+            <dl class="cp-grid">
+                {{ info_row('Nettokaltmiete', format_currency(miete.kaltmiete)) }}
+                {{ info_row('Betriebskosten', format_currency(miete.betriebskosten)) }}
+                {{ info_row('Heizkosten', format_currency(miete.heizkosten)) }}
+            </dl>
+            <div class="cp-total">
+                <span class="cp-total-label">Gesamtmiete (monatlich)</span>
+                <span class="cp-total-value">{{ format_currency(miete.gesamtmiete) }}</span>
+            </div>
+        </section>
+
+        <!-- § 6 Kaution -->
+        <section class="cp-section" aria-labelledby="s-kaution">
+            <h2 id="s-kaution">§ 6 Kaution</h2>
+            <dl class="cp-grid">
+                <div class="cp-row">
+                    <dt>Kautionsbetrag</dt>
+                    <dd class="cp-bold">{{ format_currency(kaution.betrag) }}</dd>
+                </div>
+            </dl>
+            <p class="cp-legal-note">
+                Die Kaution ist gemäß § 551 BGB auf maximal drei Nettokaltmieten begrenzt.
+            </p>
+        </section>
+
+        <!-- § 7 Bankverbindung -->
+        <section class="cp-section" aria-labelledby="s-bank">
+            <h2 id="s-bank">§ 7 Bankverbindung</h2>
+            <dl class="cp-grid">
+                {{ info_row('Bank', bankverbindung.bank_name) }}
+                <div class="cp-row">
+                    <dt>IBAN</dt>
+                    <dd class="cp-mono">{{ format_iban(bankverbindung.iban) }}</dd>
+                </div>
+                {% if bankverbindung.bic %}
+                <div class="cp-row">
+                    <dt>BIC</dt>
+                    <dd class="cp-mono">{{ bankverbindung.bic }}</dd>
+                </div>
+                {% endif %}
+                {{ info_row('Verwendungszweck', bankverbindung.verwendungszweck) }}
+            </dl>
+        </section>
+
+        <!-- § 8 Sonstige Vereinbarungen -->
+        {% if vereinbarungen and (vereinbarungen.besonderheiten or vereinbarungen.sonstige) %}
+        <section class="cp-section" aria-labelledby="s-vereinbarungen">
+            <h2 id="s-vereinbarungen">§ 8 Sonstige Vereinbarungen</h2>
+            {% if vereinbarungen.besonderheiten %}
+            <p class="cp-preformatted">{{ vereinbarungen.besonderheiten }}</p>
+            {% endif %}
+            {% if vereinbarungen.sonstige %}
+            <p class="cp-preformatted" style="margin-top: 0.75rem;">{{ vereinbarungen.sonstige }}</p>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <!-- § 9 Unterschriften -->
+        <section class="cp-section" aria-labelledby="s-unterschriften">
+            <h2 id="s-unterschriften">§ 9 Unterschriften</h2>
+            <p class="cp-sig-note">
+                Mit der digitalen Unterschrift bestätigen alle Parteien die Richtigkeit
+                der Angaben und stimmen den Vertragsbedingungen zu.
+            </p>
+        </section>
+    </div>
+</article>

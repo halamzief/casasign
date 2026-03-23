@@ -95,3 +95,122 @@ class ResendEmailService:
                 message=f"Failed to send email: {str(e)}",
                 email_id=None,
             )
+
+    async def send_signature_request(
+        self,
+        signer_email: str,
+        signer_name: str,
+        landlord_name: str,
+        property_address: str,
+        signing_link: str,
+        kaution_amount: float,
+        language: str = "de",
+    ) -> EmailSendResponse:
+        """Send signature request email.
+
+        Args:
+            signer_email: Signer email address
+            signer_name: Signer name
+            landlord_name: Landlord name
+            property_address: Property address
+            signing_link: Magic link for signing
+            kaution_amount: Deposit amount
+            language: Email language
+
+        Returns:
+            EmailSendResponse
+        """
+        variables = {
+            "signer_name": signer_name,
+            "signer_email": signer_email,
+            "landlord_name": landlord_name,
+            "property_address": property_address,
+            "signing_link": signing_link,
+            "kaution_amount": f"{kaution_amount:,.2f}",
+            "unsubscribe_link": f"{settings.signing_base_url}/unsubscribe",
+        }
+
+        return await self.send_email(
+            to_email=signer_email,
+            to_name=signer_name,
+            template_key="signature_request",
+            variables=variables,
+            language=language,
+        )
+
+    async def send_signature_completed(
+        self,
+        recipient_email: str,
+        recipient_name: str,
+        property_address: str,
+        signers: list[dict[str, str]],
+        download_link: str,
+        language: str = "de",
+    ) -> EmailSendResponse:
+        """Send signature completed confirmation email.
+
+        Args:
+            recipient_email: Recipient email
+            recipient_name: Recipient name
+            property_address: Property address
+            signers: List of signers with name, role, signed_at
+            download_link: Link to download signed contract
+            language: Email language
+
+        Returns:
+            EmailSendResponse
+        """
+        variables = {
+            "recipient_name": recipient_name,
+            "property_address": property_address,
+            "signers": signers,
+            "download_link": download_link,
+        }
+
+        return await self.send_email(
+            to_email=recipient_email,
+            to_name=recipient_name,
+            template_key="signature_completed",
+            variables=variables,
+            language=language,
+        )
+
+    async def send_signature_reminder(
+        self,
+        signer_email: str,
+        signer_name: str,
+        landlord_name: str,
+        property_address: str,
+        signing_link: str,
+        expires_at: str,
+        language: str = "de",
+    ) -> EmailSendResponse:
+        """Send signature reminder email.
+
+        Args:
+            signer_email: Signer email
+            signer_name: Signer name
+            landlord_name: Landlord name
+            property_address: Property address
+            signing_link: Magic link for signing
+            expires_at: Expiration datetime
+            language: Email language
+
+        Returns:
+            EmailSendResponse
+        """
+        variables = {
+            "signer_name": signer_name,
+            "landlord_name": landlord_name,
+            "property_address": property_address,
+            "signing_link": signing_link,
+            "expires_at": expires_at,
+        }
+
+        return await self.send_email(
+            to_email=signer_email,
+            to_name=signer_name,
+            template_key="signature_reminder",
+            variables=variables,
+            language=language,
+        )
