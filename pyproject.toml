@@ -1,0 +1,69 @@
+[project]
+name = "casasign"
+version = "0.1.0"
+description = "Generic digital document signature service with audit trails, multi-signer support, and email notifications"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "email-validator>=2.2.0",
+    "sqlalchemy>=2.0",
+    "asyncpg>=0.29.0",
+    "jinja2>=3.1.0",
+    "pypdf>=4.0.0",
+    "reportlab>=4.4.3",
+    "pillow>=11.0.0",
+    "resend>=2.0.0",
+    "httpx>=0.27.0",
+    "python-multipart>=0.0.9",
+    "orjson>=3.10.0",
+    "loguru>=0.7.0",
+    "python-dotenv>=1.0.0",
+    "playwright>=1.54.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "playwright>=1.54.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = ["E", "W", "F", "I", "B", "C4", "ARG", "SIM"]
+ignore = ["E501", "B008", "ARG001", "ARG002"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["ARG001", "ARG002"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+]

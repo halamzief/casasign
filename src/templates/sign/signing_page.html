@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Dokument unterschreiben - CasaSign{% endblock %}
+
+{% block head %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block styles %}
+/* Signing page styles */
+.signing-page { min-height: 100vh; background-color: #f9fafb; }
+.loading-state, .error-state { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.spinner { width: 3rem; height: 3rem; border: 4px solid #2563eb; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+.contract-wrapper { background-color: #f9fafb; min-height: 100vh; }
+.signature-section { background-color: #f3f4f6; border-top: 4px solid #16a34a; }
+.btn-submit { padding: 1rem 2rem; background-color: #16a34a; color: white; font-size: 1.125rem; font-weight: 600; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: background-color 0.2s; min-height: 48px; }
+.btn-submit:hover:not(:disabled) { background-color: #15803d; }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (max-width: 768px) {
+    .btn-submit { width: 100%; padding: 1.25rem 2rem; font-size: 1.25rem; }
+    .signature-section { padding: 1rem 1.5rem; }
+}
+{% endblock %}
+
+{% block body %}
+<div class="signing-page" x-data="signingPageData()" x-init="init()">
+    <!-- Loading State -->
+    <template x-if="loading">
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p class="mt-4 text-gray-600">Dokument wird geladen...</p>
+        </div>
+    </template>
+
+    <!-- Error State -->
+    <template x-if="error">
+        <div class="error-state">
+            <div class="text-6xl mb-4">X</div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Fehler</h1>
+            <p class="text-gray-600" x-text="error"></p>
+            <a href="/" class="mt-6 inline-block text-blue-600 hover:underline">
+                Zurück zur Startseite
+            </a>
+        </div>
+    </template>
+
+    <!-- Main Content -->
+    <template x-if="!loading && !error && contractData">
+        <div>
+            <!-- Consent Modal -->
+            <template x-if="showConsentModal">
+                <div class="min-h-screen bg-gradient-to-b from-emerald-50 to-white py-8 px-4">
+                    {% include "partials/consent_modal.html" %}
+                </div>
+            </template>
+
+            <!-- Contract View + Signature -->
+            <template x-if="!showConsentModal">
+                <div>
+                    <!-- Contract Header -->
+                    <div class="bg-white border-b sticky top-0 z-10 px-6 py-4 shadow-sm">
+                        <div class="max-w-4xl mx-auto">
+                            <h1 class="text-2xl font-bold text-gray-900"
+                                x-text="contractData.document_title || 'Dokument'"></h1>
+                            <p class="text-sm text-gray-600 mt-1"
+                                x-text="contractData.property_address || ''"></p>
+                        </div>
+                    </div>
+
+                    <!-- Contract Content -->
+                    <div id="contract-content" class="max-w-4xl mx-auto px-6 py-8">
+                        <div x-html="contractHTML"></div>
+                    </div>
+
+                    <!-- Signature Section -->
+                    <template x-if="showSignaturePad">
+                        <div class="signature-section">
+                            <div class="max-w-2xl mx-auto px-6 py-8">
+                                <div id="signature-pad-container"></div>
+
+                                <div class="mt-6 flex justify-end">
+                                    <button type="button"
+                                        @click="handleSignatureSubmit()"
+                                        :disabled="submitting"
+                                        class="btn-submit">
+                                        <span x-text="submitting ? 'Wird übermittelt...' : 'Unterschrift abschließen'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Load signature pad component -->
+<script src="/static/js/signature-pad.js"></script>
+<script src="/static/js/signing-flow.js"></script>
+
+<script>
+function signingPageData() {
+    return {
+        // State
+        token: '{{ token }}',
+        loading: true,
+        error: null,
+        contractData: null,
+        contractHTML: '',
+
+        // UI state
+        showConsentModal: false,
+        showSignaturePad: false,
+        consents: null,
+        submitting: false,
+
+        // Methods
+        async init() {
+            await this.loadContractData();
+
+            // Listen for consent-done from the inline consent modal
+            this.$el.addEventListener('consent-done', (e) => {
+                this.handleConsentSubmit(e.detail);
+            });
+        },
+
+        async loadContractData() {
+            try {
+                const response = await fetch(`/api/sign/${this.token}`);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Dokument konnte nicht geladen werden');
+                }
+
+                this.contractData = await response.json();
+                this.loading = false;
+
+                // Check if already signed
+                if (this.contractData.is_already_signed) {
+                    this.error = 'Sie haben dieses Dokument bereits unterschrieben.';
+                    return;
+                }
+
+                // Show consent modal first
+                this.showConsentModal = true;
+
+                // Load contract HTML if available
+                if (this.contractData.contract_html) {
+                    this.contractHTML = this.contractData.contract_html;
+                }
+            } catch (err) {
+                this.error = err.message;
+                this.loading = false;
+            }
+        },
+
+        handleConsentSubmit(consentData) {
+            this.consents = consentData;
+            this.showConsentModal = false;
+            this.showSignaturePad = true;
+
+            // Initialize signature pad after DOM update
+            this.$nextTick(() => {
+                this.initSignaturePad();
+            });
+        },
+
+        initSignaturePad() {
+            this.signaturePadComponent = new SignaturePadComponent('signature-pad-container', {
+                signerName: this.contractData.signer_name,
+                onSignatureChange: (state) => {
+                    // Could update UI based on signature state
+                }
+            });
+        },
+
+        async handleSignatureSubmit() {
+            if (!this.signaturePadComponent || !this.signaturePadComponent.validate()) {
+                alert('Bitte unterschreiben Sie zuerst.');
+                return;
+            }
+
+            const signatureData = this.signaturePadComponent.getSignatureData();
+
+            if (!signatureData) {
+                alert('Unterschrift fehlt.');
+                return;
+            }
+
+            this.submitting = true;
+
+            try {
+                const response = await fetch(`/api/sign/${this.token}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        signature_image_base64: signatureData,
+                        consents: this.consents
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Unterschrift konnte nicht übermittelt werden');
+                }
+
+                // Redirect to success page
+                window.location.href = `/sign/${this.token}/success`;
+            } catch (err) {
+                alert(`Fehler: ${err.message}`);
+            } finally {
+                this.submitting = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

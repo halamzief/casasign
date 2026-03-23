@@ -1,0 +1,303 @@
+{# Contract Preview - JSON mode client-side rendering #}
+{% set metadata = contract_data.get('metadata', {}) %}
+{% set vermieter = contract_data.get('vermieter', {}) %}
+{% set mieter1 = contract_data.get('mieter1', {}) %}
+{% set mieter2 = contract_data.get('mieter2') %}
+{% set mietobjekt = contract_data.get('mietobjekt', {}) %}
+{% set mietzeit = contract_data.get('mietzeit', {}) %}
+{% set miete = contract_data.get('miete', {}) %}
+{% set kaution = contract_data.get('kaution', {}) %}
+{% set bankverbindung = contract_data.get('bankverbindung', {}) %}
+{% set vereinbarungen = contract_data.get('vereinbarungen') %}
+
+{% macro format_date(date_str) %}
+{% if date_str %}{{ date_str[8:10] }}.{{ date_str[5:7] }}.{{ date_str[0:4] }}{% else %}-{% endif %}
+{% endmacro %}
+
+{% macro format_currency(amount) %}
+{% if amount is not none %}{{ "{:,.2f}".format(amount).replace(",", "X").replace(".", ",").replace("X", ".") }} EUR{% else %}-{% endif %}
+{% endmacro %}
+
+{% macro format_iban(iban) %}
+{% if iban %}{{ iban | replace(" ", "") | batch(4) | map('join') | join(' ') }}{% else %}-{% endif %}
+{% endmacro %}
+
+<article class="contract-preview max-w-3xl mx-auto p-4 text-gray-800" role="document" aria-label="Vertragsdokument">
+    <style>
+        .contract-preview { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-overflow-scrolling: touch; }
+        .contract-header { text-align: center; padding: 1.5rem 0; border-bottom: 3px solid #059669; margin-bottom: 1.5rem; }
+        .contract-header h1 { font-size: 1.5rem; font-weight: 700; color: #059669; margin: 0; }
+        .contract-number { font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem; }
+        .contract-section { padding: 1.25rem 0; border-bottom: 1px solid #e5e7eb; }
+        .contract-section h2 { font-size: 1.125rem; font-weight: 600; color: #047857; margin: 0 0 1rem 0; }
+        .contract-section h3 { font-size: 1rem; font-weight: 500; color: #374151; margin: 1rem 0 0.75rem 0; }
+        .info-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+        .info-row { display: flex; flex-wrap: wrap; }
+        .info-row dt { width: 140px; flex-shrink: 0; color: #6b7280; font-size: 0.875rem; }
+        .info-row dd { flex: 1; font-weight: 500; color: #1f2937; margin: 0; }
+        .total-box { margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .total-label { font-weight: 600; color: #374151; }
+        .total-value { font-size: 1.25rem; font-weight: 700; color: #059669; }
+        .signature-note { font-size: 0.875rem; color: #6b7280; font-style: italic; }
+        @media (max-width: 640px) {
+            .contract-preview { padding: 0.75rem; }
+            .contract-header h1 { font-size: 1.25rem; }
+            .info-row { flex-direction: column; }
+            .info-row dt { width: 100%; margin-bottom: 0.125rem; }
+            .total-box { flex-direction: column; gap: 0.5rem; text-align: center; }
+            .contract-section h2 { font-size: 1rem; }
+        }
+    </style>
+
+    <!-- Header -->
+    <header class="contract-header">
+        <h1>MIETVERTRAG ÜBER WOHNRAUM</h1>
+        {% if metadata.contract_number %}
+            <p class="contract-number">Vertragsnummer: {{ metadata.contract_number }}</p>
+        {% endif %}
+    </header>
+
+    <!-- Section 1: Vermieter -->
+    <section class="contract-section" aria-labelledby="section-vermieter">
+        <h2 id="section-vermieter">§ 1 VERMIETER</h2>
+        <dl class="info-grid">
+            <div class="info-row">
+                <dt>Name/Firma:</dt>
+                <dd>{{ vermieter.name or '-' }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>E-Mail:</dt>
+                <dd>{{ vermieter.email or '-' }}</dd>
+            </div>
+            {% if vermieter.phone %}
+            <div class="info-row">
+                <dt>Telefon:</dt>
+                <dd>{{ vermieter.phone }}</dd>
+            </div>
+            {% endif %}
+            {% if vermieter.anschrift %}
+            <div class="info-row">
+                <dt>Anschrift:</dt>
+                <dd>{{ vermieter.anschrift }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </section>
+
+    <!-- Section 2: Mieter -->
+    <section class="contract-section" aria-labelledby="section-mieter">
+        <h2 id="section-mieter">§ 2 MIETER</h2>
+
+        <h3>Mieter 1 (Hauptmieter):</h3>
+        <dl class="info-grid">
+            <div class="info-row">
+                <dt>Name:</dt>
+                <dd>{{ mieter1.vorname or '' }} {{ mieter1.nachname or '' }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>Geburtsdatum:</dt>
+                <dd>{{ format_date(mieter1.geburtstag) }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>E-Mail:</dt>
+                <dd>{{ mieter1.email or '-' }}</dd>
+            </div>
+            {% if mieter1.telefon %}
+            <div class="info-row">
+                <dt>Telefon:</dt>
+                <dd>{{ mieter1.telefon }}</dd>
+            </div>
+            {% endif %}
+            {% if mieter1.anschrift %}
+            <div class="info-row">
+                <dt>Anschrift:</dt>
+                <dd>{{ mieter1.anschrift.strasse or '' }} {{ mieter1.anschrift.hausnummer or '' }}, {{ mieter1.anschrift.plz or '' }} {{ mieter1.anschrift.stadt or mieter1.anschrift.ort or '' }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+
+        {% if mieter2 %}
+        <h3>Mieter 2:</h3>
+        <dl class="info-grid">
+            <div class="info-row">
+                <dt>Name:</dt>
+                <dd>{{ mieter2.vorname or '' }} {{ mieter2.nachname or '' }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>Geburtsdatum:</dt>
+                <dd>{{ format_date(mieter2.geburtstag) }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>E-Mail:</dt>
+                <dd>{{ mieter2.email or '-' }}</dd>
+            </div>
+            {% if mieter2.telefon %}
+            <div class="info-row">
+                <dt>Telefon:</dt>
+                <dd>{{ mieter2.telefon }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+        {% endif %}
+    </section>
+
+    <!-- Section 3: Mietobjekt -->
+    <section class="contract-section" aria-labelledby="section-mietobjekt">
+        <h2 id="section-mietobjekt">§ 3 MIETOBJEKT</h2>
+        <dl class="info-grid">
+            {% if mietobjekt.liegenschaft %}
+            <div class="info-row">
+                <dt>Liegenschaft:</dt>
+                <dd>{{ mietobjekt.liegenschaft }}</dd>
+            </div>
+            {% endif %}
+            <div class="info-row">
+                <dt>Adresse:</dt>
+                <dd>{{ mietobjekt.strasse or '' }} {{ mietobjekt.hausnummer or '' }}, {{ mietobjekt.plz or '' }} {{ mietobjekt.ort or '' }}</dd>
+            </div>
+            {% if mietobjekt.lage %}
+            <div class="info-row">
+                <dt>Lage/Etage:</dt>
+                <dd>{{ mietobjekt.lage }}</dd>
+            </div>
+            {% endif %}
+            {% if mietobjekt.zimmer_anzahl %}
+            <div class="info-row">
+                <dt>Zimmeranzahl:</dt>
+                <dd>{{ mietobjekt.zimmer_anzahl }}</dd>
+            </div>
+            {% endif %}
+            {% if mietobjekt.personenanzahl %}
+            <div class="info-row">
+                <dt>Personenanzahl:</dt>
+                <dd>{{ mietobjekt.personenanzahl }}</dd>
+            </div>
+            {% endif %}
+            {% if mietobjekt.stellplatz %}
+            <div class="info-row">
+                <dt>Stellplatz:</dt>
+                <dd>{{ mietobjekt.stellplatz.typ }}{% if mietobjekt.stellplatz.nummer %} (Nr. {{ mietobjekt.stellplatz.nummer }}){% endif %}</dd>
+            </div>
+            {% endif %}
+            {% if mietobjekt.kellerraum_nummer %}
+            <div class="info-row">
+                <dt>Kellerraum:</dt>
+                <dd>Nr. {{ mietobjekt.kellerraum_nummer }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </section>
+
+    <!-- Section 4: Mietzeit -->
+    <section class="contract-section" aria-labelledby="section-mietzeit">
+        <h2 id="section-mietzeit">§ 4 MIETZEIT</h2>
+        <dl class="info-grid">
+            <div class="info-row">
+                <dt>Mietbeginn:</dt>
+                <dd>{{ format_date(mietzeit.beginn) }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>Befristet:</dt>
+                <dd>{% if mietzeit.befristet %}Ja{% else %}Nein (unbefristet){% endif %}</dd>
+            </div>
+            {% if mietzeit.ende %}
+            <div class="info-row">
+                <dt>Mietende:</dt>
+                <dd>{{ format_date(mietzeit.ende) }}</dd>
+            </div>
+            {% endif %}
+            {% if mietzeit.mindestmietzeit_monate %}
+            <div class="info-row">
+                <dt>Mindestmietzeit:</dt>
+                <dd>{{ mietzeit.mindestmietzeit_monate }} Monate</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </section>
+
+    <!-- Section 5: Miete und Nebenkosten -->
+    <section class="contract-section" aria-labelledby="section-miete">
+        <h2 id="section-miete">§ 5 MIETE UND NEBENKOSTEN</h2>
+        <dl class="info-grid">
+            <div class="info-row">
+                <dt>Nettokaltmiete:</dt>
+                <dd>{{ format_currency(miete.kaltmiete) }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>Betriebskosten:</dt>
+                <dd>{{ format_currency(miete.betriebskosten) }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>Heizkosten:</dt>
+                <dd>{{ format_currency(miete.heizkosten) }}</dd>
+            </div>
+        </dl>
+        <div class="total-box">
+            <span class="total-label">GESAMTMIETE (monatlich):</span>
+            <span class="total-value">{{ format_currency(miete.gesamtmiete) }}</span>
+        </div>
+    </section>
+
+    <!-- Section 6: Kaution -->
+    <section class="contract-section" aria-labelledby="section-kaution">
+        <h2 id="section-kaution">§ 6 KAUTION</h2>
+        <dl class="info-grid">
+            <div class="info-row">
+                <dt>Kautionsbetrag:</dt>
+                <dd class="font-bold">{{ format_currency(kaution.betrag) }}</dd>
+            </div>
+        </dl>
+        <p class="text-sm text-gray-600 mt-2">
+            Die Kaution ist gemäß § 551 BGB auf maximal 3 Nettokaltmieten begrenzt.
+        </p>
+    </section>
+
+    <!-- Section 7: Bankverbindung -->
+    <section class="contract-section" aria-labelledby="section-bank">
+        <h2 id="section-bank">§ 7 BANKVERBINDUNG</h2>
+        <dl class="info-grid">
+            <div class="info-row">
+                <dt>Bank:</dt>
+                <dd>{{ bankverbindung.bank_name or '-' }}</dd>
+            </div>
+            <div class="info-row">
+                <dt>IBAN:</dt>
+                <dd class="font-mono text-sm">{{ format_iban(bankverbindung.iban) }}</dd>
+            </div>
+            {% if bankverbindung.bic %}
+            <div class="info-row">
+                <dt>BIC:</dt>
+                <dd class="font-mono text-sm">{{ bankverbindung.bic }}</dd>
+            </div>
+            {% endif %}
+            {% if bankverbindung.verwendungszweck %}
+            <div class="info-row">
+                <dt>Verwendungszweck:</dt>
+                <dd>{{ bankverbindung.verwendungszweck }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </section>
+
+    <!-- Section 8: Sonstige Vereinbarungen -->
+    {% if vereinbarungen and (vereinbarungen.besonderheiten or vereinbarungen.sonstige) %}
+    <section class="contract-section" aria-labelledby="section-vereinbarungen">
+        <h2 id="section-vereinbarungen">§ 8 SONSTIGE VEREINBARUNGEN</h2>
+        {% if vereinbarungen.besonderheiten %}
+        <p class="whitespace-pre-wrap">{{ vereinbarungen.besonderheiten }}</p>
+        {% endif %}
+        {% if vereinbarungen.sonstige %}
+        <p class="whitespace-pre-wrap mt-4">{{ vereinbarungen.sonstige }}</p>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- Section 9: Unterschriften -->
+    <section class="contract-section" aria-labelledby="section-unterschriften">
+        <h2 id="section-unterschriften">§ 9 UNTERSCHRIFTEN</h2>
+        <p class="signature-note">
+            Mit der digitalen Unterschrift bestätigen alle Parteien die Richtigkeit der Angaben und
+            stimmen den Vertragsbedingungen zu.
+        </p>
+    </section>
+</article>

@@ -1,0 +1,37 @@
+version: '3.8'
+
+# FES Microservice - Jinja2 templates + FastAPI backend
+# No separate frontend - all served from backend
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: signcasa-signatures-backend
+    environment:
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=false
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./storage/signatures:/app/storage/signatures
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx reverse proxy (optional - can use Caddy instead)
+  nginx:
+    image: nginx:alpine
+    container_name: signcasa-signatures-nginx
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

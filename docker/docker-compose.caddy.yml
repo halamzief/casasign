@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: signcasa-signatures-backend
+    environment:
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=false
+    volumes:
+      - ./storage/signatures:/app/storage/signatures
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - signcasa-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: signcasa-signatures-frontend
+    environment:
+      - PUBLIC_API_URL=https://sign.signcasa.de/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - signcasa-net
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: signcasa-signatures-caddy
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2019:2019"  # Health check
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+    networks:
+      - signcasa-net
+
+volumes:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  caddy_logs:
+    driver: local
+
+networks:
+  signcasa-net:
+    driver: bridge

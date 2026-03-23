@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Unterschrift erfolgreich - CasaSign{% endblock %}
+
+{% block head %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block styles %}
+.success-page {
+    min-height: 100vh;
+    background: linear-gradient(to bottom, #ecfdf5, white);
+    padding: 2rem 1rem;
+}
+.success-card {
+    max-width: 32rem;
+    margin: 0 auto;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    padding: 2.5rem 2rem;
+}
+.checkmark-circle {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    background-color: #d1fae5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+}
+.info-box {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+{% endblock %}
+
+{% block body %}
+<div class="success-page">
+    <div class="success-card">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <div class="checkmark-circle">
+                <i data-lucide="check" class="w-10 h-10 text-emerald-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                Erfolgreich unterschrieben!
+            </h1>
+            <p class="text-gray-600">
+                Ihr Dokument wurde erfolgreich digital unterschrieben.
+            </p>
+        </div>
+
+        <!-- Personal greeting -->
+        {% if signer_name %}
+        <p class="text-center text-lg text-gray-700 mb-6">
+            Vielen Dank, <strong>{{ signer_name.split(' ')[0] }}</strong>!
+        </p>
+        {% endif %}
+
+        <!-- Info box -->
+        <div class="info-box mb-6">
+            <div class="flex items-start gap-3">
+                <i data-lucide="mail" class="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0"></i>
+                <p class="text-sm text-emerald-800">
+                    Alle Beteiligten erhalten eine Bestätigung per E-Mail.
+                </p>
+            </div>
+        </div>
+
+        <!-- Close hint -->
+        <p class="text-sm text-gray-500 text-center">
+            Sie können dieses Fenster jetzt schließen.
+        </p>
+    </div>
+</div>
+{% endblock %}
