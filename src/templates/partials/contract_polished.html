@@ -12,15 +12,15 @@
 {% set vereinbarungen = contract_data.get('vereinbarungen') %}
 
 {% macro fmt_date(date_str) %}
-{%- if date_str %}{{ date_str[8:10] }}.{{ date_str[5:7] }}.{{ date_str[0:4] }}{% else %}___________{% endif -%}
+{%- if date_str is defined and date_str and date_str is string %}{{ date_str[8:10] }}.{{ date_str[5:7] }}.{{ date_str[0:4] }}{% else %}___________{% endif -%}
 {% endmacro %}
 
 {% macro fmt_cur(amount) %}
-{%- if amount is not none %}{{ "{:,.2f}".format(amount).replace(",", "X").replace(".", ",").replace("X", ".") }} €{% else %}________ €{% endif -%}
+{%- if amount is defined and amount is not none and amount is number %}{{ "{:,.2f}".format(amount).replace(",", "X").replace(".", ",").replace("X", ".") }} €{% else %}________ €{% endif -%}
 {% endmacro %}
 
 {% macro fmt_iban(iban) %}
-{%- if iban %}{{ iban | replace(" ", "") | batch(4) | map('join') | join(' ') }}{% else %}____________________________{% endif -%}
+{%- if iban is defined and iban and iban is string %}{{ iban | replace(" ", "") | batch(4) | map('join') | join(' ') }}{% else %}____________________________{% endif -%}
 {% endmacro %}
 
 {% macro fmt_addr(addr) %}
