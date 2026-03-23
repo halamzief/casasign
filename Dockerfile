@@ -10,8 +10,8 @@ RUN apt-get update && \
 ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /app
 
-COPY pyproject.toml uv.lock* README.md ./
-RUN uv sync --frozen --no-dev
+COPY pyproject.toml README.md ./
+RUN uv sync --no-dev
 
 # Stage 2: Runtime
 FROM python:3.12-slim-trixie AS runtime
