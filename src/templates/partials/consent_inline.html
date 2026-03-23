@@ -1,7 +1,7 @@
 {# Inline Consent Section - Below contract, above signature #}
 <div class="bg-white rounded-xl border border-slate-200 p-5 md:p-6">
     <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">
-        Bestätigung
+        Best&auml;tigung
     </h3>
 
     <!-- Select All -->
@@ -12,7 +12,7 @@
             @change="identityConfirmed = $event.target.checked;
                      contractReviewed = $event.target.checked;
                      datenschutzAccepted = $event.target.checked;">
-        <span class="text-sm font-medium text-slate-600">Alle auswählen</span>
+        <span class="text-sm font-medium text-slate-600">Alle best&auml;tigen</span>
     </label>
 
     <!-- Individual Consents -->
@@ -22,8 +22,8 @@
             <input type="checkbox" x-model="identityConfirmed"
                 class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
             <span class="text-sm text-slate-600 leading-relaxed">
-                Ich bin <strong class="text-slate-800" x-text="contractData.signer_name"></strong>
-                und bestätige meine Identität.
+                Ich best&auml;tige, dass ich die unterzeichnende Person bin
+                (<strong class="text-slate-800" x-text="contractData.signer_email"></strong>).
             </span>
         </label>
 
@@ -32,9 +32,7 @@
             <input type="checkbox" x-model="contractReviewed"
                 class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
             <span class="text-sm text-slate-600 leading-relaxed">
-                Ich habe den Mietvertrag für
-                <strong class="text-slate-800" x-text="contractData.property_address"></strong>
-                gelesen und verstanden.
+                Ich habe den Mietvertrag vollst&auml;ndig gelesen und verstanden.
             </span>
         </label>
 
@@ -44,7 +42,7 @@
                 class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
             <span class="text-sm text-slate-600 leading-relaxed">
                 Ich akzeptiere die
-                <a href="/datenschutz" target="_blank" class="text-amber-600 hover:text-amber-700 underline underline-offset-2">Datenschutzerklärung</a>
+                <a href="/datenschutz" target="_blank" class="text-amber-600 hover:text-amber-700 underline underline-offset-2">Datenschutzerkl&auml;rung</a>
                 und die
                 <a href="/agb" target="_blank" class="text-amber-600 hover:text-amber-700 underline underline-offset-2">AGB</a>.
             </span>
