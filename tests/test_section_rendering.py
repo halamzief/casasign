@@ -175,7 +175,7 @@ class TestSectionRendererWithSections:
         """All 16 default section keys must produce non-empty rendered content."""
         sections = make_sections(ALL_SECTION_KEYS)
         html = self._render(jinja_env, sections)
-        for _key, title in ALL_SECTION_KEYS:
+        for _, title in ALL_SECTION_KEYS:
             assert title in html, f"Section title '{title}' not found in output"
 
     def test_custom_html_overrides_default_content(
