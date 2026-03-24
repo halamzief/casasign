@@ -2,6 +2,46 @@
 
 All notable changes to signcasa-signatures are documented here.
 
+## [Session 083] - 2026-03-24
+
+### CasaSign: Attachment + Section Support
+
+Implemented CasaSign-side support for contract attachments and clause section overrides, enabling SignCasa to send rich signing payloads with custom clauses and PDF attachments.
+
+**Schema + Database:**
+- AttachmentSchema + SectionSchema with nh3 HTML sanitization on SignatureRequestCreate
+- `attachments` JSONB column on signature_requests + migration 005
+
+**Processing Pipeline:**
+- Store attachments to disk, merge sections into contract_data (repository + service)
+- Include PDF attachments in signing invitation emails via Resend SDK
+- Section-driven rendering with override support (contract_section_renderer.html)
+- Section override support in contract_final.html (PDF template)
+- Merge attachment PDFs into final signed document using pypdf
+
+**Tests:**
+- 14 schema validation tests for attachments and sections
+
+**Commits:**
+- test: add attachment and section schema validation tests (61cf1be)
+- feat: merge attachment PDFs into final signed document (5dfa1b5)
+- feat: add section override support to PDF template (1b0861b)
+- feat: add section-driven rendering with override support (31eea3a)
+- feat: include PDF attachments in signing invitation emails (0ccc6bd)
+- feat: store attachments on disk and sections in contract_data (dbdbb24)
+- feat: add attachments JSONB column to signature_requests (3e5ff19)
+- feat: add attachment and section schemas to signing request (2fa6687)
+
+**New Files:**
+- `migrations/005_add_attachments_column.sql`
+- `src/templates/partials/contract_section_renderer.html`
+- `tests/test_attachments.py`
+- `tests/test_sections.py`
+
+**Stats:** 14 new tests, 15 files changed, 364 lines added
+
+---
+
 ## [Session 049] - 2025-12-31
 
 ### FES Migration Phase 7-8: Jinja2 + Vanilla JS

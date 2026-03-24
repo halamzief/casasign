@@ -21,9 +21,21 @@
   - Removed frontend/ SvelteKit directory
   - Removed frontend service from docker-compose.yml
 
+### Attachment + Section Support (Session 083) -- DONE
+
+- [x] AttachmentSchema + SectionSchema with nh3 HTML sanitization
+- [x] `attachments` JSONB column on signature_requests + migration 005
+- [x] Store attachments to disk, merge sections into contract_data
+- [x] Include PDF attachments in signing invitation emails (Resend SDK)
+- [x] Section-driven rendering with override support
+- [x] Section override support in PDF template
+- [x] Merge attachment PDFs into final signed document (pypdf)
+- [x] 14 schema validation tests
+
 ### Next Steps
 
-- [ ] E2E Testing: Full signing flow with new Jinja2 templates
+- [ ] Full section default extraction (extract all 16 default sections from template into DB-driven rendering)
+- [ ] E2E Testing: Full signing flow with attachments and section overrides
 - [ ] Integration Testing: Verify all API endpoints work with templates
 - [ ] Production Deployment: Deploy FES with new frontend
 - [ ] Performance Testing: Compare SvelteKit vs Jinja2 performance
