@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     secret_key: str
     allowed_origins: str = "http://localhost:5174,https://app.signcasa.de"
 
+    # Webhook
+    webhook_secret: str = ""
+
     # WhatsApp Business (Premium Feature - Optional)
     whatsapp_business_enabled: bool = False
     whatsapp_api_url: str = "https://graph.facebook.com/v18.0"

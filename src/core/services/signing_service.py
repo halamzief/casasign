@@ -1,7 +1,7 @@
 """Signing flow service - handles token validation and signature completion."""
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from loguru import logger
 
@@ -9,6 +9,7 @@ from src.config import settings
 from src.core.audit.audit_service import AuditService
 from src.core.email.resend_service import ResendEmailService
 from src.core.repositories.signature_repository import SignatureRepository
+from src.core.services.webhook_helpers import send_webhook_with_retries
 from src.models.signature_request import SignatureSigner
 from src.schemas.signing import ConsentSubmission, TokenValidationResponse
 
@@ -221,13 +222,11 @@ class SigningService:
 
             logger.success("All signatures completed", request_id=str(request.id))
 
-            # Week 3: Process completed request (PDF generation, audit trail, webhook)
-            # This will be handled by the completion service
-            # Note: For async processing, this can be moved to a background task
-            logger.info(
-                "All signers completed. Ready for PDF processing.",
-                request_id=str(request.id),
-            )
+            # Send signer_signed webhook for the final signer
+            await self._send_signer_webhook(request, signer, all_signers)
+
+            # Trigger completion service (PDF generation + signature_completed webhook)
+            await self._trigger_completion(request, all_signers)
 
             next_signer = None
         else:
@@ -236,6 +235,9 @@ class SigningService:
                 request_id=request.id,
                 status="in_progress",
             )
+
+            # Send signer_signed webhook for intermediate signers
+            await self._send_signer_webhook(request, signer, all_signers)
 
             # Get next signer
             next_signer = self._get_next_signer(signer.signing_order, all_signers)
@@ -284,6 +286,76 @@ class SigningService:
             "next_signer_name": next_signer.name if next_signer else None,
             "all_completed": all_signed,
         }
+
+    async def _send_signer_webhook(
+        self,
+        request: Any,
+        signer: SignatureSigner,
+        all_signers: list[SignatureSigner],
+    ) -> None:
+        """Send signer_signed webhook to callback_url if configured."""
+        if not request.callback_url:
+            return
+        payload = {
+            "event": "signer_signed",
+            "request_id": str(request.id),
+            "contract_id": str(request.contract_id),
+            "signer": {
+                "name": signer.name,
+                "email": signer.email,
+                "role": signer.role,
+                "signed_at": datetime.now(timezone.utc).isoformat(),
+            },
+            "signers": [
+                {
+                    "email": s.email,
+                    "name": s.name,
+                    "role": s.role,
+                    "status": "signed" if s.signed_at else "pending",
+                }
+                for s in all_signers
+            ],
+        }
+        try:
+            await send_webhook_with_retries(
+                callback_url=request.callback_url,
+                payload=payload,
+                webhook_secret=settings.webhook_secret or None,
+            )
+            logger.info(f"signer_signed webhook sent for {signer.email}")
+        except Exception as e:
+            logger.error(f"signer_signed webhook failed: {e}")
+
+    async def _trigger_completion(
+        self,
+        request: Any,
+        all_signers: list[SignatureSigner],
+    ) -> None:
+        """Trigger PDF generation + signature_completed webhook."""
+        from pathlib import Path
+
+        from src.core.pdf.audit_trail_generator import AuditTrailGenerator
+        from src.core.pdf.pdf_processor import PDFProcessor
+
+        from .completion_service import CompletionService
+
+        try:
+            storage_path = Path(settings.signatures_storage_path)
+            pdf_processor = PDFProcessor(storage_path=storage_path)
+            audit_trail_generator = AuditTrailGenerator()
+            completion_service = CompletionService(
+                signature_repo=self.signature_repo,
+                audit_service=self.audit_service,
+                pdf_processor=pdf_processor,
+                audit_trail_generator=audit_trail_generator,
+                settings=settings,
+            )
+            result = await completion_service.process_completed_request(
+                request=request, signers=all_signers
+            )
+            logger.success(f"Completion processed: {result.get('file_path')}")
+        except Exception as e:
+            logger.error(f"Completion service failed: {e}", exc_info=True)
 
     def _generate_contract_html(self, request, signer: SignatureSigner) -> str:
         """Generate contract HTML from template.

@@ -25,6 +25,7 @@ from ..pdf.audit_trail_generator import AuditTrailGenerator
 from ..pdf.html_to_pdf_service import HTMLToPDFService
 from ..pdf.pdf_processor import PDFProcessingError, PDFProcessor
 from ..repositories.signature_repository import SignatureRepository
+from .webhook_helpers import send_webhook_with_retries
 
 
 class CompletionService:
@@ -369,10 +370,11 @@ class CompletionService:
         }
 
         try:
-            # Try webhook with retries
-            result = await self._send_webhook_with_retries(
+            # Try webhook with HMAC signing and retries
+            result = await send_webhook_with_retries(
                 callback_url=callback_url,
                 payload=webhook_payload,
+                webhook_secret=self.settings.webhook_secret or None,
                 max_retries=3,
             )
 
