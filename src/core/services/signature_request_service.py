@@ -1,5 +1,7 @@
 """Signature request service - business logic orchestration."""
 
+import base64
+from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
@@ -154,6 +156,24 @@ class SignatureRequestService:
             property_address = "Mietobjekt"
             kaution_amount = 0.0
 
+        # Build email attachments from stored files
+        email_attachments = None
+        if request.attachments:
+            email_attachments = []
+            for att in request.attachments:
+                try:
+                    att_path = Path(att["storage_path"])
+                    if att_path.exists():
+                        content = base64.b64encode(att_path.read_bytes()).decode("utf-8")
+                        email_attachments.append(
+                            {
+                                "filename": att["filename"],
+                                "content": content,
+                            }
+                        )
+                except Exception as e:
+                    logger.warning(f"Failed to load attachment {att.get('filename')}: {e}")
+
         result = await self.email_service.send_signature_request(
             signer_email=signer.email,
             signer_name=signer.name,
@@ -162,6 +182,7 @@ class SignatureRequestService:
             signing_link=signing_link,
             kaution_amount=kaution_amount,
             language="de",
+            attachments=email_attachments,
         )
 
         # Log audit event

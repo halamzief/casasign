@@ -28,6 +28,7 @@ class ResendEmailService:
         variables: dict[str, Any],
         language: str = "de",
         tenant_id: Optional[str] = None,
+        attachments: Optional[list[dict]] = None,
     ) -> EmailSendResponse:
         """Send email using template.
 
@@ -67,6 +68,9 @@ class ResendEmailService:
                 "text": rendered.body_text,
             }
 
+            if attachments:
+                params["attachments"] = attachments
+
             loop = asyncio.get_event_loop()
             email = await loop.run_in_executor(None, lambda: resend.Emails.send(params))
 
@@ -105,6 +109,7 @@ class ResendEmailService:
         signing_link: str,
         kaution_amount: float,
         language: str = "de",
+        attachments: Optional[list[dict]] = None,
     ) -> EmailSendResponse:
         """Send signature request email.
 
@@ -136,6 +141,7 @@ class ResendEmailService:
             template_key="signature_request",
             variables=variables,
             language=language,
+            attachments=attachments,
         )
 
     async def send_signature_completed(
