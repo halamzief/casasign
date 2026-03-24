@@ -1,0 +1,50 @@
+<p class="mv-p-num">1. Der Vermieter vermietet an den Mieter zu Wohnzwecken die in der
+    {{ mietobjekt.strasse or '________' }} {{ mietobjekt.hausnummer or '' }},
+    {{ mietobjekt.plz or '_____' }} {{ mietobjekt.ort or '________' }}
+    {% if mietobjekt.lage %}({{ mietobjekt.lage }}){% endif %} gelegene Wohnung.</p>
+
+<p class="mv-p mv-strong">Die Mietsache besteht aus:</p>
+
+<dl class="mv-grid">
+    {% if mietobjekt.zimmer_anzahl %}
+    <div class="mv-row"><dt>Zimmer:</dt><dd>{{ mietobjekt.zimmer_anzahl }}</dd></div>
+    {% endif %}
+    {% if mietobjekt.get('gaeste_wc') %}
+    <div class="mv-row"><dt>Gäste-WC:</dt><dd>{{ mietobjekt.gaeste_wc }}</dd></div>
+    {% endif %}
+    {% if mietobjekt.get('stellplatz') %}
+    <div class="mv-row"><dt>Stellplatz / Garage:</dt>
+        <dd>{{ mietobjekt.stellplatz.typ }}{% if mietobjekt.stellplatz.nummer %} (Nr. {{ mietobjekt.stellplatz.nummer }}){% endif %}</dd>
+    </div>
+    {% endif %}
+    {% if mietobjekt.get('kueche') %}
+    <div class="mv-row"><dt>Küche:</dt><dd>{{ mietobjekt.kueche }}</dd></div>
+    {% endif %}
+    {% if mietobjekt.get('bad') %}
+    <div class="mv-row"><dt>Bad mit WC:</dt><dd>{{ mietobjekt.bad }}</dd></div>
+    {% endif %}
+    {% if mietobjekt.kellerraum_nummer %}
+    <div class="mv-row"><dt>Kellerraum Nr.:</dt><dd>{{ mietobjekt.kellerraum_nummer }}</dd></div>
+    {% endif %}
+    {% if mietobjekt.get('liegenschaft') %}
+    <div class="mv-row"><dt>Liegenschaft:</dt><dd>{{ mietobjekt.liegenschaft }}</dd></div>
+    {% endif %}
+</dl>
+
+<p class="mv-p-num">2. Der räumliche Umfang der Wohnung ergibt sich aus der Angabe der zu Wohnzwecken vermieteten Räume.</p>
+
+<p class="mv-p-num">3. Die Benutzung der Mietsache für gewerbliche oder berufliche Zwecke bedarf der Zustimmung des Vermieters. Behördliche Genehmigungen hat der Mieter auf seine Kosten einzuholen und dem Vermieter unaufgefordert nachzuweisen.</p>
+
+<p class="mv-p-num">4. Die vom Mieter zu erhaltenden Schlüssel werden beim Einzug übergeben und im Übergabeprotokoll protokolliert.</p>
+
+<p class="mv-p mv-indent">Weitere Schlüssel darf der Mieter nur mit Zustimmung des Vermieters anfertigen lassen. Die Schlüssel sind bei Vertragsende zurückzugeben. Die nachgemachten Schlüssel sind dem Vermieter kostenlos zu überlassen oder zu vernichten. Bei Schlüsselverlust darf der Vermieter auf Kosten des Mieters neue Schlösser und Schlüssel anfertigen lassen, wenn die Sicherheit dies erfordert, ebenso wenn der Mieter beim Auszug nicht sämtliche Schlüssel herausgibt. Im Falle einer zentralen Schließanlage gilt das Gleiche. Weist der Mieter nach, dass die Sicherheit nicht konkret gefährdet ist, entfällt für ihn die Verpflichtung zum Ersatz der Kosten.</p>
+
+<p class="mv-p-num">5. Die Parteien vereinbaren, dass höchstens <strong>{{ mietobjekt.personenanzahl or '___' }}</strong> Personen in die Mietsache einziehen. Der Mieter hat dem Vermieter die amtliche Meldebestätigung innerhalb von zwei Wochen nach dem Einzug vorzulegen.</p>
+
+<p class="mv-p-num">6. Sollte einer von mehreren Mietern ausziehen, führt diese Mitteilung oder der Auszug nicht zur Entlassung aus dem Mietvertrag und stellt keinen Widerruf der Bevollmächtigung nach § 14 Abs. 2 dieses Vertrags dar.</p>
+
+<p class="mv-p-num">7. Die Mietsache ist eine Eigentumswohnung.</p>
+
+{% if mietzeit.besichtigungsdatum %}
+<p class="mv-p-num">8. Die Besichtigung der in Ziff. 1 bezeichneten Mietsache hat am <strong>{{ fmt_date(mietzeit.besichtigungsdatum) }}</strong> durch die Mieter stattgefunden.</p>
+{% endif %}

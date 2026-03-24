@@ -1,0 +1,5 @@
+<p class="mv-p-num">1. Das Mietverhältnis beginnt am <strong>{{ fmt_date(mietzeit.beginn) }}</strong> und läuft auf unbestimmte Zeit.
+    {% if mietzeit.mindestmietzeit_monate %}
+    Die Parteien verzichten wechselseitig für die Dauer von <strong>{{ mietzeit.mindestmietzeit_monate }} Monaten</strong> ab Mietbeginn auf das Recht zur ordentlichen Kündigung. Das Recht zur außerordentlichen Kündigung bleibt unberührt.
+    {% endif %}
+    </p>

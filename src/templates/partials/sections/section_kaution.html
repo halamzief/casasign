@@ -1,0 +1,18 @@
+<p class="mv-p-num">1. Der Mieter stellt dem Vermieter eine Mietsicherheit in Höhe von <strong>{{ fmt_cur(kaution.betrag) }}</strong>.</p>
+
+<p class="mv-p-num">2. Hierzu wird der Mieter den Kautionsbetrag auf folgendes Konto überweisen:</p>
+
+<dl class="mv-grid">
+    <div class="mv-row"><dt>Kreditinstitut:</dt><dd>{{ bankverbindung.bank_name or '________________________' }}</dd></div>
+    <div class="mv-row"><dt>IBAN:</dt><dd class="mv-mono">{{ fmt_iban(bankverbindung.iban) }}</dd></div>
+    {% if bankverbindung.get('bic') %}
+    <div class="mv-row"><dt>BIC:</dt><dd class="mv-mono">{{ bankverbindung.bic }}</dd></div>
+    {% endif %}
+    <div class="mv-row"><dt>Zahlungsgrund:</dt><dd>Kaution {{ bankverbindung.get('verwendungszweck', '') }}</dd></div>
+</dl>
+
+<p class="mv-legal">Die Kaution ist gemäß § 551 BGB auf maximal drei Nettokaltmieten begrenzt.</p>
+
+<p class="mv-p-num">3. Die Parteien vereinbaren ausdrücklich, dass die Mietsicherheit alle Ansprüche des Vermieters aus diesem Mietverhältnis, insbesondere auch etwaige Erstattungsansprüche von Rechtsverfolgungskosten und Zinsen aus derartigen Ansprüchen sichern soll.</p>
+
+<p class="mv-p-num">4. Der Vermieter ist berechtigt, auch im ungekündigten Mietverhältnis die Kaution auf rechtskräftig festgestellte oder unbestrittene Forderungen zu verrechnen. In diesem Fall ist der Mieter verpflichtet, die Kaution unverzüglich wieder aufzufüllen. Der Wiederauffüllungsanspruch wird fällig, sobald der Vermieter den Mieter zur Zahlung auffordert.</p>
