@@ -138,7 +138,7 @@ class TestSignatureRequestCreation:
         """Test that request creation fails without PDF or contract_data."""
         from src.schemas.signature import SignatureRequestCreate
 
-        with pytest.raises(ValueError, match="Must provide either"):
+        with pytest.raises(ValueError, match="Must provide one of"):
             SignatureRequestCreate(
                 contract_id=uuid4(),
                 requester_user_id=uuid4(),
@@ -159,7 +159,7 @@ class TestSignatureRequestCreation:
         """Test that request creation fails with both PDF and contract_data."""
         from src.schemas.signature import SignatureRequestCreate
 
-        with pytest.raises(ValueError, match="not both"):
+        with pytest.raises(ValueError, match="only one of"):
             SignatureRequestCreate(
                 contract_id=uuid4(),
                 requester_user_id=uuid4(),
