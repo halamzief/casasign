@@ -1,7 +1,7 @@
 """Signature request Pydantic schemas."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
@@ -111,6 +111,33 @@ class VereinbarungenSchema(BaseModel):
     sonstige: Optional[str] = None
 
 
+class AttachmentSchema(BaseModel):
+    """Base64-encoded PDF attachment."""
+
+    filename: str = Field(..., min_length=1, max_length=255)
+    content_base64: str = Field(..., min_length=1)
+    size_bytes: int = Field(..., ge=1)
+
+
+class SectionSchema(BaseModel):
+    """Ordered contract section with optional custom HTML override."""
+
+    sort_order: int = Field(..., ge=1)
+    title: str = Field(..., min_length=1, max_length=255)
+    section_key: Optional[str] = Field(None, max_length=50)
+    custom_html: Optional[str] = None
+
+    @field_validator("custom_html", mode="before")
+    @classmethod
+    def sanitize_html(cls, v: Optional[str]) -> Optional[str]:
+        """Defense-in-depth: sanitize custom HTML (SignCasa also sanitizes)."""
+        if v is None:
+            return None
+        import nh3
+
+        return nh3.clean(v, tags={"p", "strong", "em", "ul", "ol", "li", "br"}, attributes={})
+
+
 class ContractDataSchema(BaseModel):
     """Complete contract data for JSON-to-HTML rendering.
 
@@ -198,6 +225,18 @@ class SignatureRequestCreate(BaseModel):
     callback_url: Optional[str] = None
     custom_email_template_id: Optional[UUID] = None
     expires_in_days: int = Field(default=7, ge=1, le=30)
+    # Attachments (base64-encoded PDFs to include in contract)
+    attachments: Optional[list[AttachmentSchema]] = Field(
+        None, description="Base64-encoded PDF attachments", max_length=7
+    )
+    # Email template variables (property_address, company_name, etc.)
+    email_variables: Optional[dict[str, Any]] = Field(
+        None, description="Custom email template variables"
+    )
+    # Clause sections (ordered list with optional overrides)
+    sections: Optional[list[SectionSchema]] = Field(
+        None, description="Ordered clause sections with optional custom HTML"
+    )
 
     @model_validator(mode="after")
     def validate_document_source(self) -> "SignatureRequestCreate":
@@ -208,10 +247,23 @@ class SignatureRequestCreate(BaseModel):
         sources = sum([has_pdf, has_json, has_html])
 
         if sources > 1:
-            raise ValueError("Provide only one of: document_pdf_base64, contract_data, document_html")
+            raise ValueError(
+                "Provide only one of: document_pdf_base64, contract_data, document_html"
+            )
         if sources == 0:
-            raise ValueError("Must provide one of: document_pdf_base64, contract_data, or document_html")
+            raise ValueError(
+                "Must provide one of: document_pdf_base64, contract_data, or document_html"
+            )
 
+        return self
+
+    @model_validator(mode="after")
+    def validate_attachments_size(self) -> "SignatureRequestCreate":
+        """Ensure total attachment size doesn't exceed 15MB."""
+        if self.attachments:
+            total = sum(a.size_bytes for a in self.attachments)
+            if total > 15 * 1024 * 1024:
+                raise ValueError("Total attachment size exceeds 15MB limit")
         return self
 
     @property
