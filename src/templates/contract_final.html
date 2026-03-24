@@ -4,73 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mietvertrag - {{ contract.metadata.contract_number or contract.metadata.contract_id }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Reset and base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             font-size: 10pt;
-            line-height: 1.5;
+            line-height: 1.6;
             color: #1f2937;
             background: white;
         }
 
-        /* Page layout for A4 */
+        /* A4 page layout */
         .contract-document {
             max-width: 170mm;
             margin: 0 auto;
-            padding: 15mm 0;
+            padding: 10mm 0;
         }
 
-        /* Header */
+        /* ── Header ── */
         .contract-header {
-            text-align: center;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #059669;
-            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 16px;
+            border-bottom: 2.5px solid #d97706;
+            margin-bottom: 22px;
         }
 
-        .contract-header h1 {
-            font-size: 16pt;
+        .header-logo {
+            width: 38px;
+            height: 38px;
+            background: #d97706;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .header-logo span {
+            color: white;
             font-weight: 700;
-            color: #059669;
-            margin: 0;
-            letter-spacing: 0.5px;
+            font-size: 14pt;
+            letter-spacing: -0.5px;
         }
 
-        .contract-number {
-            font-size: 9pt;
+        .header-text {
+            flex: 1;
+        }
+
+        .header-text h1 {
+            font-size: 15pt;
+            font-weight: 700;
+            color: #92400e;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 3px;
+        }
+
+        .header-meta span {
+            font-size: 8.5pt;
             color: #6b7280;
-            margin-top: 5px;
         }
 
-        /* Sections */
+        .header-brand {
+            font-size: 8.5pt;
+            color: #b45309;
+            font-weight: 600;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* ── Sections ── */
         .contract-section {
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 1px solid #e5e7eb;
             page-break-inside: avoid;
         }
 
+        .contract-section:last-of-type {
+            border-bottom: none;
+        }
+
         .contract-section h2 {
-            font-size: 11pt;
-            font-weight: 600;
-            color: #047857;
+            font-size: 10.5pt;
+            font-weight: 700;
+            color: #92400e;
             margin: 0 0 10px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #fde68a;
         }
 
         .contract-section h3 {
             font-size: 10pt;
-            font-weight: 500;
+            font-weight: 600;
             color: #374151;
-            margin: 10px 0 8px 0;
+            margin: 12px 0 8px 0;
         }
 
-        /* Info grid */
+        /* ── Info grid ── */
         .info-grid {
             display: table;
             width: 100%;
@@ -82,7 +123,7 @@
 
         .info-row dt {
             display: table-cell;
-            width: 45mm;
+            width: 42mm;
             padding: 3px 10px 3px 0;
             color: #6b7280;
             font-size: 9pt;
@@ -96,12 +137,13 @@
             color: #1f2937;
         }
 
-        /* Total box */
+        /* ── Total box ── */
         .total-box {
             margin-top: 12px;
-            padding: 10px 15px;
-            background: #f3f4f6;
-            border-radius: 4px;
+            padding: 10px 16px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -109,16 +151,36 @@
 
         .total-label {
             font-weight: 600;
-            color: #374151;
+            color: #92400e;
+            font-size: 10pt;
         }
 
         .total-value {
             font-size: 12pt;
             font-weight: 700;
-            color: #059669;
+            color: #d97706;
         }
 
-        /* Signature section */
+        /* ── Clause sections ── */
+        .clause-content {
+            font-size: 9.5pt;
+            line-height: 1.65;
+            color: #374151;
+        }
+
+        .clause-content p {
+            margin-bottom: 6px;
+        }
+
+        .clause-content ol, .clause-content ul {
+            margin: 6px 0 6px 20px;
+        }
+
+        .clause-content li {
+            margin-bottom: 3px;
+        }
+
+        /* ── Signature section ── */
         .signature-section {
             page-break-before: always;
             padding-top: 20px;
@@ -127,34 +189,38 @@
         .signature-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 30px;
+            gap: 16px;
+            margin-top: 24px;
         }
 
         .signature-block {
             flex: 1;
             min-width: 45%;
             border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            padding: 15px;
-            background: #fafafa;
+            border-radius: 6px;
+            padding: 14px;
+            background: #fefce8;
         }
 
         .signature-block .role {
-            font-size: 9pt;
-            color: #6b7280;
-            margin-bottom: 5px;
+            font-size: 8.5pt;
+            color: #92400e;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
         }
 
         .signature-block .name {
             font-weight: 600;
             color: #1f2937;
             margin-bottom: 10px;
+            font-size: 10pt;
         }
 
         .signature-image {
-            max-width: 150px;
-            max-height: 60px;
+            max-width: 160px;
+            max-height: 65px;
             margin-bottom: 8px;
         }
 
@@ -168,36 +234,43 @@
             color: #9ca3af;
         }
 
-        /* Legal note */
+        /* ── Legal note ── */
         .legal-note {
-            font-size: 8pt;
+            font-size: 8.5pt;
             color: #6b7280;
             font-style: italic;
             margin-top: 8px;
+            line-height: 1.5;
         }
 
-        /* Utilities */
+        /* ── Footer ── */
+        .contract-footer {
+            text-align: center;
+            font-size: 8pt;
+            color: #9ca3af;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .contract-footer .brand {
+            color: #d97706;
+            font-weight: 600;
+        }
+
+        /* ── Utilities ── */
         .font-bold { font-weight: 600; }
-        .font-mono { font-family: ui-monospace, 'Courier New', monospace; }
+        .font-mono { font-family: ui-monospace, 'Courier New', monospace; letter-spacing: 0.5px; }
         .text-sm { font-size: 9pt; }
         .whitespace-pre-wrap { white-space: pre-wrap; }
         .mt-2 { margin-top: 8px; }
         .mt-4 { margin-top: 15px; }
 
-        /* Print optimization */
+        /* ── Print ── */
         @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .contract-document {
-                padding: 0;
-            }
-
-            .contract-section {
-                page-break-inside: avoid;
-            }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .contract-document { padding: 0; }
+            .contract-section { page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -205,16 +278,25 @@
     <article class="contract-document">
         <!-- Header -->
         <header class="contract-header">
-            <h1>MIETVERTRAG UBER WOHNRAUM</h1>
-            {% if contract.metadata.contract_number %}
-            <p class="contract-number">Vertragsnummer: {{ contract.metadata.contract_number }}</p>
-            {% endif %}
+            <div class="header-logo"><span>SC</span></div>
+            <div class="header-text">
+                <h1>MIETVERTRAG &Uuml;BER WOHNRAUM</h1>
+                <div class="header-meta">
+                    {% if contract.metadata.contract_number %}
+                    <span>Vertragsnr. {{ contract.metadata.contract_number }}</span>
+                    {% endif %}
+                    {% if contract.metadata.created_at %}
+                    <span>Erstellt: {{ format_date(contract.metadata.created_at) }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="header-brand">SignCasa</div>
         </header>
 
         {% if not sections %}
         <!-- Section 1: Vermieter -->
         <section class="contract-section">
-            <h2>SS 1 VERMIETER</h2>
+            <h2>&sect; 1 VERMIETER</h2>
             <dl class="info-grid">
                 <div class="info-row">
                     <dt>Name/Firma:</dt>
@@ -241,7 +323,7 @@
 
         <!-- Section 2: Mieter -->
         <section class="contract-section">
-            <h2>SS 2 MIETER</h2>
+            <h2>&sect; 2 MIETER</h2>
             <h3>Mieter 1 (Hauptmieter):</h3>
             <dl class="info-grid">
                 <div class="info-row">
@@ -291,7 +373,7 @@
 
         <!-- Section 3: Mietobjekt -->
         <section class="contract-section">
-            <h2>SS 3 MIETOBJEKT</h2>
+            <h2>&sect; 3 MIETOBJEKT</h2>
             <dl class="info-grid">
                 {% if contract.mietobjekt.liegenschaft %}
                 <div class="info-row">
@@ -315,6 +397,18 @@
                     <dd>{{ contract.mietobjekt.zimmer_anzahl }}</dd>
                 </div>
                 {% endif %}
+                {% if contract.mietobjekt.personenanzahl %}
+                <div class="info-row">
+                    <dt>Personenanzahl:</dt>
+                    <dd>{{ contract.mietobjekt.personenanzahl }}</dd>
+                </div>
+                {% endif %}
+                {% if contract.mietobjekt.stellplatz %}
+                <div class="info-row">
+                    <dt>Stellplatz:</dt>
+                    <dd>{{ contract.mietobjekt.stellplatz.typ }}{% if contract.mietobjekt.stellplatz.nummer %} Nr. {{ contract.mietobjekt.stellplatz.nummer }}{% endif %}</dd>
+                </div>
+                {% endif %}
                 {% if contract.mietobjekt.kellerraum_nummer %}
                 <div class="info-row">
                     <dt>Kellerraum:</dt>
@@ -326,15 +420,15 @@
 
         <!-- Section 4: Mietzeit -->
         <section class="contract-section">
-            <h2>SS 4 MIETZEIT</h2>
+            <h2>&sect; 4 MIETZEIT</h2>
             <dl class="info-grid">
                 <div class="info-row">
                     <dt>Mietbeginn:</dt>
                     <dd>{{ format_date(contract.mietzeit.beginn) }}</dd>
                 </div>
                 <div class="info-row">
-                    <dt>Befristet:</dt>
-                    <dd>{{ 'Ja' if contract.mietzeit.befristet else 'Nein (unbefristet)' }}</dd>
+                    <dt>Vertragsdauer:</dt>
+                    <dd>{{ 'Befristet' if contract.mietzeit.befristet else 'Unbefristet' }}</dd>
                 </div>
                 {% if contract.mietzeit.ende %}
                 <div class="info-row">
@@ -348,12 +442,18 @@
                     <dd>{{ contract.mietzeit.mindestmietzeit_monate }} Monate</dd>
                 </div>
                 {% endif %}
+                {% if contract.mietzeit.besichtigungsdatum %}
+                <div class="info-row">
+                    <dt>Besichtigung:</dt>
+                    <dd>{{ format_date(contract.mietzeit.besichtigungsdatum) }}</dd>
+                </div>
+                {% endif %}
             </dl>
         </section>
 
         <!-- Section 5: Miete und Nebenkosten -->
         <section class="contract-section">
-            <h2>SS 5 MIETE UND NEBENKOSTEN</h2>
+            <h2>&sect; 5 MIETE UND NEBENKOSTEN</h2>
             <dl class="info-grid">
                 <div class="info-row">
                     <dt>Nettokaltmiete:</dt>
@@ -376,19 +476,19 @@
 
         <!-- Section 6: Kaution -->
         <section class="contract-section">
-            <h2>SS 6 KAUTION</h2>
+            <h2>&sect; 6 KAUTION</h2>
             <dl class="info-grid">
                 <div class="info-row">
                     <dt>Kautionsbetrag:</dt>
                     <dd class="font-bold">{{ format_currency(contract.kaution.betrag) }}</dd>
                 </div>
             </dl>
-            <p class="legal-note">Die Kaution ist gemass SS 551 BGB auf maximal 3 Nettokaltmieten begrenzt.</p>
+            <p class="legal-note">Die Kaution ist gem&auml;&szlig; &sect; 551 BGB auf maximal 3 Nettokaltmieten begrenzt und auf einem separaten Kautionskonto anzulegen.</p>
         </section>
 
         <!-- Section 7: Bankverbindung -->
         <section class="contract-section">
-            <h2>SS 7 BANKVERBINDUNG</h2>
+            <h2>&sect; 7 BANKVERBINDUNG</h2>
             <dl class="info-grid">
                 <div class="info-row">
                     <dt>Bank:</dt>
@@ -404,48 +504,56 @@
                     <dd class="font-mono">{{ contract.bankverbindung.bic }}</dd>
                 </div>
                 {% endif %}
+                {% if contract.bankverbindung.verwendungszweck %}
+                <div class="info-row">
+                    <dt>Verwendungszweck:</dt>
+                    <dd>{{ contract.bankverbindung.verwendungszweck }}</dd>
+                </div>
+                {% endif %}
             </dl>
+            <p class="legal-note">Die Miete ist monatlich im Voraus, sp&auml;testens bis zum 3. Werktag eines jeden Monats, auf das oben genannte Konto zu &uuml;berweisen.</p>
         </section>
 
         <!-- Section 8: Vereinbarungen (if present) -->
         {% if contract.vereinbarungen and (contract.vereinbarungen.besonderheiten or contract.vereinbarungen.sonstige) %}
         <section class="contract-section">
-            <h2>SS 8 SONSTIGE VEREINBARUNGEN</h2>
+            <h2>&sect; 8 SONSTIGE VEREINBARUNGEN</h2>
             {% if contract.vereinbarungen.besonderheiten %}
-            <p class="whitespace-pre-wrap">{{ contract.vereinbarungen.besonderheiten }}</p>
+            <div class="clause-content whitespace-pre-wrap">{{ contract.vereinbarungen.besonderheiten }}</div>
             {% endif %}
             {% if contract.vereinbarungen.sonstige %}
-            <p class="whitespace-pre-wrap mt-4">{{ contract.vereinbarungen.sonstige }}</p>
+            <div class="clause-content whitespace-pre-wrap mt-4">{{ contract.vereinbarungen.sonstige }}</div>
             {% endif %}
         </section>
         {% endif %}
         {% endif %}
 
-        {# ── Section-driven rendering (from client sections array) ── #}
+        {# ── Section-driven rendering (custom clauses from SignCasa) ── #}
         {% if sections %}
           {% for section in sections %}
-          <section class="contract-section" style="page-break-inside: avoid; margin-top: 1.5em;">
-            <h2>SS {{ loop.index }} {{ section.title | upper }}</h2>
+          <section class="contract-section" style="page-break-inside: avoid;">
+            <h2>&sect; {{ loop.index }} {{ section.title | upper }}</h2>
             {% if section.custom_html %}
-            <div style="font-size: 10pt; line-height: 1.6;">
+            <div class="clause-content">
               {{ section.custom_html | safe }}
             </div>
             {% elif section.section_key %}
-            <p style="font-size: 9pt; color: #6b7280; font-style: italic;">
-              Siehe vollständigen Vertragstext im signierten Dokument.
+            <p class="legal-note">
+              Siehe vollst&auml;ndigen Vertragstext im signierten Dokument.
             </p>
             {% endif %}
           </section>
           {% endfor %}
         {% endif %}
 
-        <!-- Section 9: Unterschriften -->
+        <!-- Unterschriften -->
         <section class="contract-section signature-section">
-            <h2>SS 9 DIGITALE UNTERSCHRIFTEN</h2>
+            <h2>&sect; DIGITALE UNTERSCHRIFTEN</h2>
             <p class="legal-note">
-                Mit der digitalen Unterschrift bestatigen alle Parteien die Richtigkeit der Angaben
+                Mit der digitalen Unterschrift best&auml;tigen alle Parteien die Richtigkeit der Angaben
                 und stimmen den Vertragsbedingungen zu. Die Unterschriften wurden elektronisch erfasst
-                und sind rechtlich bindend gemass den Anforderungen fur fortgeschrittene elektronische Signaturen (FES).
+                und sind rechtlich bindend gem&auml;&szlig; den Anforderungen f&uuml;r fortgeschrittene
+                elektronische Signaturen (FES) nach eIDAS-Verordnung.
             </p>
 
             <div class="signature-grid">
@@ -470,8 +578,8 @@
         </section>
 
         <!-- Footer -->
-        <footer class="mt-4" style="text-align: center; font-size: 8pt; color: #9ca3af; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-            <p>Erstellt mit SignCasa - Digitale Mietvertrage</p>
+        <footer class="contract-footer">
+            <p>Erstellt mit <span class="brand">SignCasa</span> &mdash; Digitale Mietvertr&auml;ge f&uuml;r Vermieter</p>
             <p>Dokument-ID: {{ request.id }} | Generiert am: {{ generation_date }}</p>
         </footer>
     </article>
