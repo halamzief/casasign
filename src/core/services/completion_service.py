@@ -19,6 +19,7 @@ from loguru import logger
 
 from src.config import Settings
 from src.models.signature_request import SignatureRequest, SignatureSigner
+
 from ..audit.audit_service import AuditService
 from ..pdf.audit_trail_generator import AuditTrailGenerator
 from ..pdf.html_to_pdf_service import HTMLToPDFService
@@ -106,6 +107,10 @@ class CompletionService:
             final_pdf = self.audit_trail_generator.append_audit_trail(
                 signed_pdf_bytes=signed_pdf, audit_trail_bytes=audit_trail_pdf
             )
+
+            # Step 6b: Merge attachment PDFs (if any)
+            if request.attachments:
+                final_pdf = self._merge_attachments(final_pdf, request.attachments)
 
             # Step 7: Save to local filesystem
             file_path = self.pdf_processor.save_signed_pdf(
@@ -285,6 +290,41 @@ class CompletionService:
         )
 
         return signed_pdf
+
+    def _merge_attachments(self, contract_pdf: bytes, attachments: list[dict]) -> bytes:
+        """Merge attachment PDFs into the final signed document.
+
+        Appends each attachment PDF after the contract + audit trail.
+        """
+        import io
+
+        from pypdf import PdfReader, PdfWriter
+
+        writer = PdfWriter()
+
+        # Add contract pages
+        contract_reader = PdfReader(io.BytesIO(contract_pdf))
+        for page in contract_reader.pages:
+            writer.add_page(page)
+
+        # Add attachment pages
+        for att in attachments:
+            try:
+                att_path = Path(att["storage_path"])
+                if not att_path.exists():
+                    logger.warning(f"Attachment file not found: {att_path}")
+                    continue
+                att_reader = PdfReader(str(att_path))
+                for page in att_reader.pages:
+                    writer.add_page(page)
+                logger.info(f"Merged attachment: {att['filename']} ({len(att_reader.pages)} pages)")
+            except Exception as e:
+                logger.warning(f"Failed to merge attachment {att.get('filename')}: {e}")
+
+        # Write merged PDF
+        output = io.BytesIO()
+        writer.write(output)
+        return output.getvalue()
 
     async def _trigger_webhook(
         self,
