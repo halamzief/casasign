@@ -7,7 +7,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import settings
 from src.core.audit.audit_service import AuditService
 from src.core.email.resend_service import ResendEmailService
 from src.core.email.template_service import EmailTemplateService
@@ -15,6 +17,7 @@ from src.core.repositories.email_template_repository import EmailTemplateReposit
 from src.core.repositories.signature_repository import SignatureRepository
 from src.core.services.signature_request_service import SignatureRequestService
 from src.core.services.signing_service import SigningService
+from src.database.session import get_db_session
 from src.schemas.signature import (
     SignatureRequestCreate,
     SignatureRequestResponse,
@@ -25,10 +28,6 @@ from src.schemas.signing import (
     SigningCompleteResponse,
     TokenValidationResponse,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.config import settings
-from src.database.session import get_db_session
 
 router = APIRouter(prefix="/api/sign", tags=["Signatures"])
 

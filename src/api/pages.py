@@ -54,16 +54,25 @@ async def success_page(
         # Get signer by token
         signer = await repo.get_signer_by_token(token)
         if signer:
-            tenant_name = signer.get("name", "")
+            tenant_name = signer.name or ""
+            consents = signer.consents or {}
             # Get request data for property info
-            request_id = signer.get("signature_request_id")
-            if request_id:
-                sig_request = await repo.get_request_by_id(request_id)
+            if signer.request_id:
+                sig_request = await repo.get_request_by_id(signer.request_id)
                 if sig_request:
-                    property_address = sig_request.get("property_address", "")
-                    move_in_date = sig_request.get("move_in_date", "")
-                    # Get consents from signer metadata
-                    consents = signer.get("consents", {})
+                    # Extract property address from contract_data
+                    cd = sig_request.contract_data or {}
+                    mo = cd.get("mietobjekt", {})
+                    if mo.get("strasse"):
+                        property_address = (
+                            f"{mo.get('strasse', '')} {mo.get('hausnummer', '')},"
+                            f" {mo.get('plz', '')} {mo.get('ort', '')}"
+                        ).strip()
+                    elif sig_request.document_title:
+                        property_address = sig_request.document_title
+                    # Extract move-in date
+                    mietzeit = cd.get("mietzeit", {})
+                    move_in_date = mietzeit.get("mietbeginn", "")
     except Exception:
         # Silently fail - show generic success page
         pass

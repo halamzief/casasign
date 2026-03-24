@@ -32,9 +32,23 @@
 - [x] Merge attachment PDFs into final signed document (pypdf)
 - [x] 14 schema validation tests
 
+### Success Page + Typed Signatures + Consent Storage (Session 086) -- DONE
+
+- [x] Success page redesign (moving checklist, real info cards, umlauts fixed)
+- [x] Dual-mode signature pad (draw + type with 3 handwriting fonts)
+- [x] Consent capture: optional service consents (energy, internet)
+- [x] Consent storage: `consents` JSONB column on signature_signers (migration 006)
+- [x] Full backend chain: model, repository, service, API
+- [x] Success page data extraction bug fix (.get() on model object)
+
+### Section Extraction (Session 084) -- DONE
+
+- [x] Full section default extraction (16 partials, dynamic includes, section-driven rendering)
+- [x] Fixed pre-existing test failures (Pydantic v2 regex)
+- [x] 48/48 tests passing
+
 ### Next Steps
 
-- [ ] Full section default extraction (extract all 16 default sections from template into DB-driven rendering)
 - [ ] E2E Testing: Full signing flow with attachments and section overrides
 - [ ] Integration Testing: Verify all API endpoints work with templates
 - [ ] Production Deployment: Deploy FES with new frontend

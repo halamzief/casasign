@@ -1,10 +1,10 @@
-{# Inline Consent Section - Below contract, above signature #}
+{# Inline Consent Section - Below document, above signature #}
 <div class="bg-white rounded-xl border border-slate-200 p-5 md:p-6">
     <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">
-        Best&auml;tigung
+        Bestätigung
     </h3>
 
-    <!-- Select All -->
+    <!-- Select All (required only) -->
     <label class="flex items-center gap-3 cursor-pointer pb-3 mb-3 border-b border-slate-100">
         <input type="checkbox"
             class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0"
@@ -12,27 +12,27 @@
             @change="identityConfirmed = $event.target.checked;
                      contractReviewed = $event.target.checked;
                      datenschutzAccepted = $event.target.checked;">
-        <span class="text-sm font-medium text-slate-600">Alle best&auml;tigen</span>
+        <span class="text-sm font-medium text-slate-600">Alle Pflichtfelder auswählen</span>
     </label>
 
-    <!-- Individual Consents -->
+    <!-- Required Consents -->
     <div class="space-y-3">
         <!-- 1. Identity Confirmation -->
         <label class="flex items-start gap-3 cursor-pointer">
             <input type="checkbox" x-model="identityConfirmed"
                 class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
             <span class="text-sm text-slate-600 leading-relaxed">
-                Ich best&auml;tige, dass ich die unterzeichnende Person bin
-                (<strong class="text-slate-800" x-text="contractData.signer_email"></strong>).
+                Ich bin <strong class="text-slate-800" x-text="contractData.signer_name"></strong>
+                und bestätige meine Identität. <span class="text-red-400">*</span>
             </span>
         </label>
 
-        <!-- 2. Contract Reviewed -->
+        <!-- 2. Document Reviewed -->
         <label class="flex items-start gap-3 cursor-pointer">
             <input type="checkbox" x-model="contractReviewed"
                 class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
             <span class="text-sm text-slate-600 leading-relaxed">
-                Ich habe den Mietvertrag vollst&auml;ndig gelesen und verstanden.
+                Ich habe das Dokument gelesen und verstanden. <span class="text-red-400">*</span>
             </span>
         </label>
 
@@ -42,10 +42,32 @@
                 class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
             <span class="text-sm text-slate-600 leading-relaxed">
                 Ich akzeptiere die
-                <a href="/datenschutz" target="_blank" class="text-amber-600 hover:text-amber-700 underline underline-offset-2">Datenschutzerkl&auml;rung</a>
+                <a href="/datenschutz" target="_blank" class="text-amber-600 hover:text-amber-700 underline underline-offset-2">Datenschutzerklärung</a>
                 und die
-                <a href="/agb" target="_blank" class="text-amber-600 hover:text-amber-700 underline underline-offset-2">AGB</a>.
+                <a href="/agb" target="_blank" class="text-amber-600 hover:text-amber-700 underline underline-offset-2">AGB</a>. <span class="text-red-400">*</span>
             </span>
         </label>
+    </div>
+
+    <!-- Optional Service Consents -->
+    <div class="mt-4 pt-4 border-t border-slate-100">
+        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">Optional – Hilfreiche Services</p>
+        <div class="space-y-2.5">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" x-model="energySignupConsent"
+                    class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
+                <span class="text-sm text-slate-500 leading-relaxed">
+                    Ich möchte nach der Unterschrift Strom &amp; Gas für meine neue Adresse vergleichen.
+                </span>
+            </label>
+
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" x-model="internetSignupConsent"
+                    class="w-4 h-4 mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0">
+                <span class="text-sm text-slate-500 leading-relaxed">
+                    Ich möchte Internet-Verfügbarkeit für meine neue Adresse prüfen.
+                </span>
+            </label>
+        </div>
     </div>
 </div>

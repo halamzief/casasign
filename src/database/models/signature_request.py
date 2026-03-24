@@ -90,6 +90,7 @@ class SignatureSignerRow(Base):
     user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
     geolocation: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     signature_image_base64: Mapped[str | None] = mapped_column(Text, nullable=True)
+    consents: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Relationship
     request: Mapped["SignatureRequestRow"] = relationship(

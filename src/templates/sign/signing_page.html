@@ -180,6 +180,10 @@ function signingPageData() {
         contractReviewed: false,
         datenschutzAccepted: false,
 
+        // Optional service consents
+        energySignupConsent: false,
+        internetSignupConsent: false,
+
         // Upsell state
         kautionInsuranceInterest: false,
 
@@ -306,8 +310,8 @@ function signingPageData() {
                             deposit_insurance_consent: false,
                             tenant_liability_consent: false,
                             contents_insurance_consent: false,
-                            energy_signup_consent: false,
-                            internet_signup_consent: false,
+                            energy_signup_consent: this.energySignupConsent,
+                            internet_signup_consent: this.internetSignupConsent,
                             utilities_reminder_consent: false,
                             moving_services_consent: false,
                         }

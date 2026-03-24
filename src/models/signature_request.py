@@ -118,6 +118,7 @@ class SignatureSigner:
         user_agent: Optional[str] = None,
         geolocation: Optional[dict] = None,
         signature_image_base64: Optional[str] = None,
+        consents: Optional[dict] = None,
     ):
         """Initialize signer."""
         self.id = id
@@ -134,6 +135,7 @@ class SignatureSigner:
         self.user_agent = user_agent
         self.geolocation = geolocation
         self.signature_image_base64 = signature_image_base64
+        self.consents = consents
 
     def to_dict(self) -> dict:
         """Convert model to dictionary."""
@@ -152,6 +154,7 @@ class SignatureSigner:
             "user_agent": self.user_agent,
             "geolocation": self.geolocation,
             "signature_image_base64": self.signature_image_base64,
+            "consents": self.consents,
         }
 
 

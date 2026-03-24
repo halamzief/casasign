@@ -225,6 +225,7 @@ class SignatureRepository:
         ip_address: str,
         user_agent: str,
         geolocation: Optional[dict] = None,
+        consents: Optional[dict] = None,
     ) -> None:
         """Mark signer as signed."""
         stmt = (
@@ -236,6 +237,7 @@ class SignatureRepository:
                 ip_address=ip_address,
                 user_agent=user_agent,
                 geolocation=geolocation,
+                consents=consents,
             )
         )
         await self.session.execute(stmt)
@@ -312,4 +314,5 @@ class SignatureRepository:
             user_agent=row.user_agent,
             geolocation=row.geolocation,
             signature_image_base64=row.signature_image_base64,
+            consents=getattr(row, "consents", None),
         )

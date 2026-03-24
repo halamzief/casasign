@@ -170,12 +170,13 @@ class SigningService:
         if not request:
             raise ValueError("Signature request not found")
 
-        # Mark signer as signed
+        # Mark signer as signed with consents
         await self.signature_repo.mark_signer_signed(
             signer_id=signer.id,
             signature_image_base64=signature_image_base64,
             ip_address=ip_address,
             user_agent=user_agent,
+            consents=consents.model_dump() if consents else None,
         )
 
         # Record GDPR consents in audit trail

@@ -1,218 +1,365 @@
 {% extends "base.html" %}
 
-{% block title %}Unterschrift erfolgreich - SignCasa{% endblock %}
+{% block title %}Unterschrift erfolgreich – SignCasa{% endblock %}
 
 {% block head %}
 <meta name="robots" content="noindex">
 {% endblock %}
 
 {% block styles %}
-.success-popup { min-height: 100vh; background: linear-gradient(to bottom, #ecfdf5, white); padding: 2rem 1rem; }
-.popup-content { max-width: 42rem; margin: 0 auto; background: white; border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); padding: 2rem; }
-.countdown-banner { background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 0.75rem; padding: 1rem; text-align: center; }
-.checklist { background-color: #f9fafb; border-radius: 0.75rem; padding: 1.5rem; }
-.check-icon { width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; }
-.check-icon.done { background-color: #d1fae5; color: #059669; }
-.check-icon.pending { background-color: #e5e7eb; color: #9ca3af; }
-.services-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-@media (min-width: 768px) { .services-grid { grid-template-columns: repeat(2, 1fr); } }
-.service-card { display: flex; flex-direction: column; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; transition: all 0.2s; cursor: pointer; text-decoration: none; }
-.service-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #6ee7b7; }
-.service-card.highlight { border-color: #a7f3d0; background-color: #ecfdf5; }
-.reminder-card { background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.75rem; padding: 1rem; }
+.success-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 40%, #f0f9ff 100%);
+    padding: 2rem 1rem;
+}
+.page-content {
+    max-width: 40rem;
+    margin: 0 auto;
+}
+.hero-card {
+    background: white;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    padding: 2.5rem 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.hero-icon {
+    width: 4.5rem;
+    height: 4.5rem;
+    margin: 0 auto 1.25rem;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hero-icon svg {
+    width: 2.25rem;
+    height: 2.25rem;
+    color: #059669;
+}
+.countdown-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 2rem;
+    padding: 0.5rem 1.25rem;
+    margin-top: 1rem;
+}
+
+/* Checklist */
+.checklist-section {
+    background: white;
+    border-radius: 1.25rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.checklist-item:last-child { border-bottom: none; }
+.check-circle {
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.check-circle.done {
+    background: #d1fae5;
+}
+.check-circle.done svg { color: #059669; }
+.check-circle.todo {
+    background: #f1f5f9;
+    border: 2px solid #e2e8f0;
+}
+
+/* Service cards */
+.service-section {
+    margin-bottom: 1.5rem;
+}
+.service-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    margin-bottom: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+.service-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+.service-card.energy:hover { border-color: #fbbf24; }
+.service-card.internet:hover { border-color: #60a5fa; }
+.service-icon {
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.service-icon.energy { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+.service-icon.internet { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+.service-icon svg { width: 1.5rem; height: 1.5rem; }
+.service-icon.energy svg { color: #d97706; }
+.service-icon.internet svg { color: #2563eb; }
+.service-meta {
+    flex: 1;
+    min-width: 0;
+}
+.service-arrow {
+    flex-shrink: 0;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+.service-card:hover .service-arrow { color: #475569; }
+
+/* Info banner */
+.info-banner {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 1px solid #bfdbfe;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+}
+.info-banner-icon {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: #dbeafe;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.info-banner-icon svg { width: 1.25rem; height: 1.25rem; color: #2563eb; }
+
+/* Secondary actions */
+.secondary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 480px) { .secondary-grid { grid-template-columns: 1fr; } }
+.secondary-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.875rem;
+    padding: 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.secondary-card:hover { border-color: #94a3b8; background: #f8fafc; }
+.secondary-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    flex-shrink: 0;
+}
+.secondary-icon svg { width: 1.125rem; height: 1.125rem; color: #64748b; }
 {% endblock %}
 
 {% block body %}
-<div class="success-popup" x-data="successPageData()">
-    <div class="popup-content">
-        <!-- Header with celebration -->
-        <div class="text-center mb-8">
-            <div class="text-6xl mb-4">ERFOLG!</div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">
-                Herzlichen Gluckwunsch{% if tenant_name %}, {{ tenant_name.split(' ')[0] }}{% endif %}!
+<div class="success-page">
+    <div class="page-content">
+
+        <!-- Hero -->
+        <div class="hero-card">
+            <div class="hero-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-1">
+                Unterschrift erfolgreich{% if tenant_name %}, {{ tenant_name.split(' ')[0] }}{% endif %}!
             </h1>
-            <p class="text-xl text-gray-600">
-                Ihr Mietvertrag ist unterschrieben.
+            <p class="text-gray-500">
+                Ihr Mietvertrag wurde digital unterschrieben.
+                {% if property_address %}
+                <br><span class="text-gray-400">{{ property_address }}</span>
+                {% endif %}
             </p>
-            {% if property_address %}
-            <p class="text-gray-500 mt-2">
-                {{ property_address }}
-            </p>
+
+            {% if move_in_date %}
+            <div class="countdown-pill" x-data="{ days: calculateDaysUntil('{{ move_in_date }}') }" x-show="days !== null">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#059669">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                <span class="text-sm font-semibold text-emerald-700" x-text="days + ' Tage bis zum Einzug'"></span>
+            </div>
             {% endif %}
         </div>
 
-        <!-- Move-in countdown -->
-        {% if move_in_date %}
-        <div class="countdown-banner mb-6" x-data="{ days: calculateDaysUntil('{{ move_in_date }}') }" x-show="days !== null">
-            <div class="text-2xl font-bold text-emerald-700" x-text="days"></div>
-            <div class="text-sm text-emerald-600">Tage bis zum Einzug</div>
-        </div>
-        {% endif %}
-
-        <!-- Next Steps Checklist -->
-        <div class="checklist mb-8">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">
-                Was Sie jetzt tun sollten:
-            </h2>
-            <ul class="space-y-3">
-                <li class="flex items-center gap-3">
-                    <span class="check-icon done">OK</span>
-                    <span>Bestatigung per E-Mail erhalten</span>
-                </li>
-                <li class="flex items-center gap-3">
-                    <span class="check-icon pending">O</span>
-                    <span>Strom & Gas anmelden</span>
-                </li>
-                <li class="flex items-center gap-3">
-                    <span class="check-icon pending">O</span>
-                    <span>Internet einrichten lassen</span>
-                </li>
-                <li class="flex items-center gap-3">
-                    <span class="check-icon pending">O</span>
-                    <span class="text-amber-700 font-medium">
-                        Ummeldung beim Amt (innerhalb 2 Wochen nach Einzug!)
-                    </span>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Services Grid -->
-        <div class="mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                Jetzt Zeit und Geld sparen:
-            </h3>
-            <div class="services-grid">
-                <!-- Strom & Gas -->
-                {% if consents.get('energy_signup_consent', True) %}
-                <a href="https://www.check24.de/strom/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature&address={{ property_address | urlencode }}"
-                   target="_blank" rel="noopener noreferrer" class="service-card highlight">
-                    <div class="text-3xl mb-2">Blitz</div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">Strom & Gas anmelden</h4>
-                        <p class="text-sm text-gray-600">Bis zu 300 EUR Wechselbonus</p>
-                    </div>
-                    <span class="text-emerald-600 text-sm font-medium mt-2">Jetzt vergleichen</span>
-                </a>
-                {% endif %}
-
-                <!-- Internet -->
-                {% if consents.get('internet_signup_consent', True) %}
-                <a href="https://www.check24.de/dsl/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature&address={{ property_address | urlencode }}"
-                   target="_blank" rel="noopener noreferrer" class="service-card highlight">
-                    <div class="text-3xl mb-2">Signal</div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">Internet einrichten</h4>
-                        <p class="text-sm text-gray-600">Beste Tarife fur Ihre neue Adresse</p>
-                    </div>
-                    <span class="text-emerald-600 text-sm font-medium mt-2">Verfugbarkeit prufen</span>
-                </a>
-                {% endif %}
-
-                <!-- Umzug -->
-                {% if consents.get('moving_services_consent', True) %}
-                <a href="https://www.check24.de/umzug/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature"
-                   target="_blank" rel="noopener noreferrer" class="service-card">
-                    <div class="text-3xl mb-2">Paket</div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">Umzugshelfer finden</h4>
-                        <p class="text-sm text-gray-600">Bis zu 40% sparen</p>
-                    </div>
-                    <span class="text-emerald-600 text-sm font-medium mt-2">Angebote vergleichen</span>
-                </a>
-                {% endif %}
-
-                <!-- Haftpflicht -->
-                {% if consents.get('tenant_liability_consent', True) %}
-                <a href="https://www.check24.de/haftpflichtversicherung/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature"
-                   target="_blank" rel="noopener noreferrer" class="service-card">
-                    <div class="text-3xl mb-2">Schild</div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">Haftpflichtversicherung</h4>
-                        <p class="text-sm text-gray-600">Schutz ab 3 EUR/Monat</p>
-                    </div>
-                    <span class="text-emerald-600 text-sm font-medium mt-2">Mehr erfahren</span>
-                </a>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Ummeldung Reminder Card -->
-        <div class="reminder-card mb-6">
-            <div class="flex items-start gap-4">
-                <span class="text-3xl">Dokument</span>
+        <!-- Checklist -->
+        <div class="checklist-section">
+            <h2 class="text-base font-semibold text-gray-900 mb-2">Nächste Schritte</h2>
+            <div class="checklist-item">
+                <div class="check-circle done">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                </div>
                 <div>
-                    <h4 class="font-semibold text-blue-900">Wichtig: Ummeldung nicht vergessen!</h4>
-                    <p class="text-sm text-blue-800 mt-1">
-                        Sie mussen sich innerhalb von 2 Wochen nach dem Einzug beim
-                        Einwohnermeldeamt ummelden. Bringen Sie Ihren Personalausweis und
-                        die Wohnungsgeberbescheinigung mit.
-                    </p>
+                    <p class="text-sm font-medium text-gray-900">Mietvertrag unterschrieben</p>
+                    <p class="text-xs text-gray-400">Bestätigung per E-Mail gesendet</p>
+                </div>
+            </div>
+            <div class="checklist-item">
+                <div class="check-circle todo"></div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900">Strom &amp; Gas für die neue Wohnung anmelden</p>
+                    <p class="text-xs text-gray-400">Ohne eigenen Vertrag zahlen Sie den teuren Grundversorger-Tarif</p>
+                </div>
+            </div>
+            <div class="checklist-item">
+                <div class="check-circle todo"></div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900">Internet &amp; Telefon einrichten</p>
+                    <p class="text-xs text-gray-400">Vorlaufzeit beachten – am besten jetzt schon bestellen</p>
+                </div>
+            </div>
+            <div class="checklist-item">
+                <div class="check-circle todo"></div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900 text-amber-700">Wohnsitz ummelden (Pflicht!)</p>
+                    <p class="text-xs text-gray-400">Innerhalb von 2 Wochen nach Einzug beim Einwohnermeldeamt</p>
                 </div>
             </div>
         </div>
 
-        <!-- Email Reminder Option -->
-        <div class="text-center mb-6" x-data="{ showForm: false, email: '', sent: false }">
-            <template x-if="!showForm && !sent">
-                <button type="button" @click="showForm = true"
-                    class="text-emerald-600 hover:text-emerald-700 underline text-sm">
-                    Links per E-Mail zusenden
-                </button>
-            </template>
-            <template x-if="showForm && !sent">
-                <div class="flex gap-2 justify-center">
-                    <input type="email" x-model="email" placeholder="Ihre E-Mail-Adresse"
-                        class="px-4 py-2 border rounded-lg text-sm w-64">
-                    <button type="button" @click="sent = true; showForm = false"
-                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">
-                        Senden
-                    </button>
+        <!-- Strom & Gas -->
+        <div class="service-section">
+            <a href="https://www.check24.de/strom/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature{% if property_address %}&address={{ property_address | urlencode }}{% endif %}"
+               target="_blank" rel="noopener noreferrer" class="service-card energy">
+                <div class="service-icon energy">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
                 </div>
-            </template>
-            <template x-if="sent">
-                <p class="text-emerald-600 text-sm">Wir senden Ihnen die Links per E-Mail!</p>
-            </template>
+                <div class="service-meta">
+                    <p class="text-sm font-semibold text-gray-900">Strom- &amp; Gaszähler anmelden</p>
+                    <p class="text-xs text-gray-500">Grundversorgung ist bis zu 40 % teurer – jetzt günstigeren Tarif sichern</p>
+                </div>
+                <div class="service-arrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </div>
+            </a>
         </div>
 
-        <!-- Disclaimer -->
-        <p class="text-xs text-gray-400 text-center">
-            Diese Empfehlungen sind kostenlos fur Sie. SignCasa erhalt ggf. eine Provision von Partnern.
-        </p>
+        <!-- Internet -->
+        <div class="service-section">
+            <a href="https://www.check24.de/dsl/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature{% if property_address %}&address={{ property_address | urlencode }}{% endif %}"
+               target="_blank" rel="noopener noreferrer" class="service-card internet">
+                <div class="service-icon internet">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
+                    </svg>
+                </div>
+                <div class="service-meta">
+                    <p class="text-sm font-semibold text-gray-900">Internet für Ihre neue Adresse</p>
+                    <p class="text-xs text-gray-500">Verfügbarkeit prüfen &amp; direkt beauftragen – Schaltung dauert oft 2–4 Wochen</p>
+                </div>
+                <div class="service-arrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </div>
+            </a>
+        </div>
 
-        <!-- Close hint -->
-        <p class="text-sm text-gray-500 text-center mt-4">
-            Sie konnen dieses Fenster jetzt schliessen.
-        </p>
+        <!-- Ummeldung info banner -->
+        <div class="info-banner">
+            <div class="info-banner-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-blue-900">Ummeldung nicht vergessen</p>
+                <p class="text-xs text-blue-700 mt-0.5">
+                    Sie müssen sich innerhalb von 2 Wochen nach Einzug beim Einwohnermeldeamt ummelden.
+                    Bringen Sie Personalausweis und Wohnungsgeberbescheinigung mit.
+                </p>
+            </div>
+        </div>
+
+        <!-- Secondary: Umzug + Haftpflicht -->
+        <div class="secondary-grid">
+            <a href="https://www.check24.de/umzug/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature"
+               target="_blank" rel="noopener noreferrer" class="secondary-card">
+                <div class="secondary-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0H21M3.375 14.25h3.375m0 0V11.25m0 3H12M5.625 11.25H12m0 0V8.625m0 2.625h3.75" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-700">Umzugshelfer</p>
+                    <p class="text-xs text-gray-400">Angebote vergleichen</p>
+                </div>
+            </a>
+
+            <a href="https://www.check24.de/haftpflichtversicherung/?utm_source=signcasa&utm_medium=tenant_success&utm_campaign=post_signature"
+               target="_blank" rel="noopener noreferrer" class="secondary-card">
+                <div class="secondary-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-700">Haftpflichtversicherung</p>
+                    <p class="text-xs text-gray-400">Ab 3 €/Monat</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center">
+            <p class="text-xs text-gray-400 mb-3">
+                Empfehlungen sind kostenlos für Sie. SignCasa erhält ggf. eine Provision.
+            </p>
+            <p class="text-xs text-gray-300">
+                Sie können dieses Fenster jetzt schließen.
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function successPageData() {
-    return {
-        // Helper to calculate days until move-in
-        calculateDaysUntil(dateStr) {
-            if (!dateStr) return null;
-            try {
-                // Parse DD.MM.YYYY format
-                const parts = dateStr.split('.');
-                if (parts.length === 3) {
-                    const date = new Date(parts[2], parts[1] - 1, parts[0]);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const diff = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
-                    return diff > 0 ? diff : null;
-                }
-            } catch {
-                return null;
-            }
-            return null;
-        }
-    };
-}
-
-// Also expose for x-data usage
 function calculateDaysUntil(dateStr) {
     if (!dateStr) return null;
     try {
@@ -228,6 +375,10 @@ function calculateDaysUntil(dateStr) {
         return null;
     }
     return null;
+}
+
+function successPageData() {
+    return { calculateDaysUntil };
 }
 </script>
 {% endblock %}

@@ -1,7 +1,6 @@
 """Pytest configuration and fixtures for FES signature service tests."""
 
 import asyncio
-import os
 from typing import AsyncGenerator, Generator
 
 import pytest

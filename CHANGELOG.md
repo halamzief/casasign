@@ -2,6 +2,74 @@
 
 All notable changes to signcasa-signatures are documented here.
 
+## [Session 086] - 2026-03-24
+
+### Success Page Makeover, Typed Signatures, Consent Storage
+
+Major UX improvements: success page redesigned as moving checklist, dual-mode signature pad (draw + type), and consent capture with full backend storage.
+
+**Success Page Total Makeover (`templates/sign/success_page.html`):**
+- Redesigned from ad-like page to smart moving checklist
+- Clean hero with checkmark icon, structured next-steps checklist
+- Strom/Gas card: "Grundversorgung ist bis zu 40% teurer" (explains why)
+- Internet card: "Schaltung dauert oft 2-4 Wochen" (urgency through real info)
+- Ummeldung as info banner, Umzug + Haftpflicht as secondary cards
+- All umlauts fixed, removed fake email-send form
+
+**Dual-Mode Signature Pad (`static/js/signature-pad.js`):**
+- Draw tab: existing canvas drawing (unchanged behavior)
+- Type tab: text input + 3 handwriting fonts (Caveat, Dancing Script, Pacifico)
+- Font selector with visual preview, auto-size text to fit canvas
+- Both modes produce identical base64 PNG for the API
+- Fixed "Loschen" -> "Loschen" umlaut
+
+**Consent Capture + Storage:**
+- Optional service consents (energy, internet) below required consents in `partials/consent_inline.html`
+- Wired energySignupConsent and internetSignupConsent into submit payload (`signing_page.html`)
+- New `consents` JSONB column on `signature_signers` table (migration 006)
+- Updated SignatureSignerRow model, SignatureSigner domain model, repository mapper
+- `mark_signer_signed()` now stores consents
+- `complete_signature()` passes consents through via `model_dump()`
+
+**Success Page Data Fix (`api/pages.py`):**
+- Fixed bug: was calling `.get()` on model object (always failed silently in try/except)
+- Now reads `signer.consents`, extracts property address from contract_data
+- Extracts move_in_date from `contract_data.mietzeit.mietbeginn`
+
+**New Files:**
+- `migrations/006_add_signer_consents.sql`
+
+**Files Changed:**
+- `src/templates/sign/success_page.html` (total rewrite)
+- `src/templates/sign/signing_page.html` (consent state + submit payload)
+- `src/templates/partials/consent_inline.html` (optional service consents)
+- `src/templates/static/js/signature-pad.js` (dual-mode: draw + type)
+- `src/database/models/signature_request.py` (consents JSONB column)
+- `src/models/signature_request.py` (consents field on domain model)
+- `src/core/repositories/signature_repository.py` (consents in mark_signer_signed)
+- `src/core/services/signing_service.py` (pass consents to repo)
+- `src/api/pages.py` (fix success page data extraction)
+
+---
+
+## [Session 084] - 2026-03-24
+
+### CasaSign Section Extraction + Test Fixes
+
+Completed full section default extraction: 16 section partials, dynamic include rendering, section-driven contract_final.html. Fixed pre-existing test failures.
+
+**Section Partials (16 files):**
+- Created `src/templates/partials/sections/section_{vermieter,mieter,mietobjekt,...,unterschriften}.html`
+- Each partial extracted from monolithic `contract_clauses_1..4.html` files
+- Dynamic include via `contract_section_renderer.html`
+
+**Test Fixes:**
+- Fixed regex mismatches in `test_json_mode.py` (Pydantic v2 error messages)
+- 19 new section rendering tests
+- 48/48 tests passing
+
+---
+
 ## [Session 083] - 2026-03-24
 
 ### CasaSign: Attachment + Section Support
