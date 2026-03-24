@@ -30,6 +30,8 @@ class SignatureRequest:
         pdf_generated_at: Optional[datetime] = None,
         # HTML mode fields
         document_html: Optional[str] = None,
+        # Attachments
+        attachments: Optional[list] = None,
         # Metadata
         document_title: Optional[str] = None,
         document_name: Optional[str] = None,
@@ -51,6 +53,7 @@ class SignatureRequest:
         self.document_type = document_type
         self.pdf_generated_at = pdf_generated_at
         self.document_html = document_html
+        self.attachments = attachments
         self.document_title = document_title
         self.document_name = document_name
         self.sender_name = sender_name
@@ -81,6 +84,7 @@ class SignatureRequest:
             "pdf_generated_at": (
                 self.pdf_generated_at.isoformat() if self.pdf_generated_at else None
             ),
+            "attachments": self.attachments,
             "requester_user_id": str(self.requester_user_id),
             "requester_email": self.requester_email,
             "tenant_id": str(self.tenant_id),

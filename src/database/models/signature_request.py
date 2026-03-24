@@ -29,6 +29,7 @@ class SignatureRequestRow(Base):
     document_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     contract_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     document_html: Mapped[str | None] = mapped_column(Text, nullable=True)
+    attachments: Mapped[list | None] = mapped_column(JSON, nullable=True)
     pdf_generated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -48,9 +49,7 @@ class SignatureRequestRow(Base):
 
     # Optional
     callback_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    custom_email_template_id: Mapped[str | None] = mapped_column(
-        UUID(as_uuid=False), nullable=True
-    )
+    custom_email_template_id: Mapped[str | None] = mapped_column(UUID(as_uuid=False), nullable=True)
 
     # Relationships
     signers: Mapped[list["SignatureSignerRow"]] = relationship(
