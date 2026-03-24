@@ -1,0 +1,47 @@
+{# Renders contract sections in order.
+   If sections list is provided: render in sort_order with overrides.
+   If not: fall back to hardcoded clause includes (current behavior).
+#}
+{% if sections %}
+  {% for section in sections %}
+  <section class="mv-section">
+    <h2>{{ "\u00a7" }} {{ loop.index }} {{ section.title }}</h2>
+    {% if section.custom_html %}
+      {# Custom HTML override — sanitized server-side by SignCasa + CasaSign #}
+      <div class="mv-custom-content">
+        {{ section.custom_html | safe }}
+      </div>
+    {% elif section.section_key %}
+      {# Default section — render placeholder for known keys #}
+      {% set key = section.section_key %}
+      {% if key in ('vermieter', 'mieter', 'mietobjekt') %}
+        <p class="mv-p">Siehe Angaben oben.</p>
+      {% elif key == 'mietzeit' %}
+        <p class="mv-p">Der Mietvertrag beginnt am {{ fmt_date(mietzeit.beginn) }}{% if mietzeit.ende %} und endet am {{ fmt_date(mietzeit.ende) }}{% else %} und wird auf unbestimmte Zeit geschlossen{% endif %}.</p>
+      {% elif key == 'miete_nebenkosten' %}
+        <p class="mv-p">Die monatliche Kaltmiete betr&auml;gt {{ fmt_cur(miete.kaltmiete) }}.</p>
+        <p class="mv-p">Betriebskostenvorauszahlung: {{ fmt_cur(miete.betriebskosten) }}</p>
+        {% if miete.heizkosten %}<p class="mv-p">Heizkostenvorauszahlung: {{ fmt_cur(miete.heizkosten) }}</p>{% endif %}
+        <p class="mv-p"><strong>Gesamtmiete: {{ fmt_cur(miete.gesamtmiete) }}</strong></p>
+      {% elif key == 'kaution' %}
+        <p class="mv-p">Der Mieter zahlt eine Kaution in H&ouml;he von {{ fmt_cur(kaution.betrag) }}.</p>
+        <p class="mv-legal">Die Kaution ist gem&auml;&szlig; {{ "\u00a7" }} 551 BGB auf maximal drei Nettokaltmieten begrenzt.</p>
+      {% else %}
+        {# For all other known keys (schoenheitsreparaturen, kleinreparaturen,
+           tierhaltung, untervermietung, hausordnung, rauchmelder, legionellen,
+           zustellung, sonstige_vereinbarungen, unterschriften):
+           Fall back to the hardcoded clause includes below #}
+      {% endif %}
+    {% else %}
+      {# Custom section with no key and no custom_html #}
+      <p class="mv-p"><em>Kein Inhalt definiert.</em></p>
+    {% endif %}
+  </section>
+  {% endfor %}
+{% else %}
+  {# Fallback: hardcoded clause includes (backward compatible) #}
+  {% include "partials/contract_clauses_1.html" %}
+  {% include "partials/contract_clauses_2.html" %}
+  {% include "partials/contract_clauses_3.html" %}
+  {% include "partials/contract_clauses_4.html" %}
+{% endif %}

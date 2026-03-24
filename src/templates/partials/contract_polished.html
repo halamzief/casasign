@@ -100,11 +100,9 @@ ___________________________________________
         <p class="mv-conclusion">wird folgender Mietvertrag geschlossen:</p>
     </section>
 
-    {# ── Legal Clauses (split into partials) ── #}
-    {% include "partials/contract_clauses_1.html" %}
-    {% include "partials/contract_clauses_2.html" %}
-    {% include "partials/contract_clauses_3.html" %}
-    {% include "partials/contract_clauses_4.html" %}
+    {# ── Legal Clauses (section-driven with override support) ── #}
+    {% set sections = contract_data.get('sections', []) if contract_data else [] %}
+    {% include "partials/contract_section_renderer.html" %}
 
     {# ── Footer ── #}
     <footer class="mv-footer">
