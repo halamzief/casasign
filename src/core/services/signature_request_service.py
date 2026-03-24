@@ -63,6 +63,15 @@ class SignatureRequestService:
             if is_json_mode and request_data.contract_data:
                 contract_data_dict = request_data.contract_data.model_dump()
 
+            # Extract attachments and sections from request
+            attachment_dicts = None
+            if request_data.attachments:
+                attachment_dicts = [a.model_dump() for a in request_data.attachments]
+
+            section_dicts = None
+            if request_data.sections:
+                section_dicts = [s.model_dump() for s in request_data.sections]
+
             # Create request and signers in database
             request, signers = await self.signature_repo.create_request(
                 contract_id=request_data.contract_id,
@@ -83,6 +92,8 @@ class SignatureRequestService:
                 callback_url=request_data.callback_url,
                 custom_email_template_id=request_data.custom_email_template_id,
                 expires_in_days=request_data.expires_in_days,
+                attachments=attachment_dicts,
+                sections=section_dicts,
             )
 
             # Log audit event

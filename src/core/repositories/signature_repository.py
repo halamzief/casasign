@@ -42,6 +42,8 @@ class SignatureRepository:
         callback_url: Optional[str] = None,
         custom_email_template_id: Optional[UUID] = None,
         expires_in_days: int = 7,
+        attachments: Optional[list[dict]] = None,
+        sections: Optional[list[dict]] = None,
     ) -> tuple[SignatureRequest, list[SignatureSigner]]:
         """Create signature request with signers."""
         if document_html is not None:
@@ -70,6 +72,28 @@ class SignatureRepository:
                 document_hash = calculate_sha256_from_base64(document_pdf_base64)
                 document_url = await self._save_pdf(request_id, document_pdf_base64)
 
+            # Process attachments: decode base64 and save to disk
+            attachment_metadata = None
+            if attachments:
+                attachment_metadata = []
+                for att in attachments:
+                    att_path = self._save_attachment(
+                        request_id=request_id,
+                        filename=att["filename"],
+                        content_base64=att["content_base64"],
+                    )
+                    attachment_metadata.append(
+                        {
+                            "filename": att["filename"],
+                            "storage_path": str(att_path),
+                            "size_bytes": att["size_bytes"],
+                        }
+                    )
+
+            # Merge sections into contract_data for template rendering
+            if sections and contract_data:
+                contract_data["sections"] = sections
+
             # Create request row
             request_row = SignatureRequestRow(
                 id=str(request_id),
@@ -78,6 +102,7 @@ class SignatureRepository:
                 document_url=document_url,
                 contract_data=contract_data,
                 document_html=document_html,
+                attachments=attachment_metadata,
                 document_type=document_type,
                 document_title=document_title,
                 document_name=document_name,
@@ -231,6 +256,17 @@ class SignatureRepository:
         logger.debug("PDF saved to filesystem", path=str(file_path))
         return f"{settings.signatures_storage_path}/{filename}"
 
+    def _save_attachment(self, request_id: UUID, filename: str, content_base64: str) -> Path:
+        """Decode base64 PDF and save to disk."""
+        att_dir = Path(settings.signatures_storage_path) / "attachments" / str(request_id)
+        att_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = Path(filename).name  # Prevent directory traversal
+        file_path = att_dir / safe_name
+        file_data = base64.b64decode(content_base64)
+        file_path.write_bytes(file_data)
+        logger.info(f"Saved attachment: {file_path} ({len(file_data)} bytes)")
+        return file_path
+
     def _request_row_to_model(self, row: SignatureRequestRow) -> SignatureRequest:
         """Convert SQLAlchemy row to domain model."""
         return SignatureRequest(
@@ -244,6 +280,7 @@ class SignatureRepository:
             contract_data=row.contract_data,
             document_type=row.document_type,
             pdf_generated_at=row.pdf_generated_at,
+            attachments=getattr(row, "attachments", None),
             document_html=getattr(row, "document_html", None),
             document_title=getattr(row, "document_title", None),
             document_name=getattr(row, "document_name", None),
