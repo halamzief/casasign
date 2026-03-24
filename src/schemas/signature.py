@@ -321,7 +321,10 @@ class SignerStatusResponse(BaseModel):
     email: str
     role: str
     signed_at: Optional[datetime] = None
+    viewed_at: Optional[datetime] = None
     signing_url: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
 
 
 class SignatureRequestStatusResponse(BaseModel):

@@ -253,7 +253,10 @@ class SignatureRequestService:
                 "email": s.email,
                 "role": s.role,
                 "signed_at": s.signed_at,
+                "viewed_at": getattr(s, "viewed_at", None),
                 "signing_url": signing_url,
+                "ip_address": str(s.ip_address) if getattr(s, "ip_address", None) else None,
+                "user_agent": getattr(s, "user_agent", None),
             })
 
         return {
