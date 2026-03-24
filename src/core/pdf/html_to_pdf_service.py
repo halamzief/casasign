@@ -147,6 +147,9 @@ class HTMLToPDFService:
                 }
             )
 
+        # Extract sections from contract_data for section-driven rendering
+        sections = contract.get("sections", [])
+
         return {
             "contract": contract,
             "request": {
@@ -155,6 +158,7 @@ class HTMLToPDFService:
             },
             "signers": signer_data,
             "signature_images": signature_images,
+            "sections": sections,
             "generation_date": datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC"),
         }
 

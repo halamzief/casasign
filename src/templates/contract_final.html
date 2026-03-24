@@ -419,6 +419,22 @@
         </section>
         {% endif %}
 
+        {# ── Custom Section Overrides (from SignCasa clause editor) ── #}
+        {% if sections %}
+          {% for section in sections %}
+            {% if section.custom_html or (section.section_key is none and section.custom_html) %}
+            <section class="contract-section" style="page-break-inside: avoid; margin-top: 1.5em;">
+              <h2>SS {{ section.sort_order }} {{ section.title | upper }}</h2>
+              {% if section.custom_html %}
+              <div style="font-size: 10pt; line-height: 1.6;">
+                {{ section.custom_html | safe }}
+              </div>
+              {% endif %}
+            </section>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
         <!-- Section 9: Unterschriften -->
         <section class="contract-section signature-section">
             <h2>SS 9 DIGITALE UNTERSCHRIFTEN</h2>
