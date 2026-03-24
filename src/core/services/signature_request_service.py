@@ -243,12 +243,26 @@ class SignatureRequestService:
         signed_count = sum(1 for s in signers if s.signed_at is not None)
         pending_signers = [s.name for s in signers if s.signed_at is None]
 
+        signer_details = []
+        for s in signers:
+            signing_url = None
+            if s.signed_at is None and s.verification_token:
+                signing_url = f"{settings.signing_base_url}/sign/{s.verification_token}"
+            signer_details.append({
+                "name": s.name,
+                "email": s.email,
+                "role": s.role,
+                "signed_at": s.signed_at,
+                "signing_url": signing_url,
+            })
+
         return {
             "id": str(request.id),
             "status": request.status,
             "total_signers": len(signers),
             "signed_count": signed_count,
             "pending_signers": pending_signers,
+            "signers": signer_details,
             "expires_at": request.expires_at,
             "created_at": request.created_at,
             "completed_at": request.completed_at,

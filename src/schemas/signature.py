@@ -314,6 +314,16 @@ class SignatureRequestResponse(BaseModel):
         from_attributes = True
 
 
+class SignerStatusResponse(BaseModel):
+    """Individual signer status in a signature request."""
+
+    name: str
+    email: str
+    role: str
+    signed_at: Optional[datetime] = None
+    signing_url: Optional[str] = None
+
+
 class SignatureRequestStatusResponse(BaseModel):
     """Schema for signature request status."""
 
@@ -322,6 +332,7 @@ class SignatureRequestStatusResponse(BaseModel):
     total_signers: int
     signed_count: int
     pending_signers: list[str]  # List of pending signer names
+    signers: list[SignerStatusResponse] = []
     expires_at: datetime
     created_at: datetime
     completed_at: Optional[datetime]
