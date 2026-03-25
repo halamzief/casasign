@@ -217,6 +217,10 @@ function signingPageData() {
         async init() {
             await this.loadContractData();
             this.setupScrollObserver();
+            // Re-init Lucide icons after Alpine renders templates
+            this.$nextTick(() => {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
         },
 
         async loadContractData() {
