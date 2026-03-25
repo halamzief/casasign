@@ -209,11 +209,17 @@ class SigningService:
 
         if all_signed:
             # Update request status to completed
+            completed_at = datetime.now(timezone.utc)
             await self.signature_repo.update_request_status(
                 request_id=request.id,
                 status="completed",
-                completed_at=datetime.now(timezone.utc),
+                completed_at=completed_at,
             )
+
+            # Re-fetch request so completion service sees correct status/completed_at
+            updated_request = await self.signature_repo.get_request_by_id(request.id)
+            if not updated_request:
+                raise ValueError("Request disappeared after status update")
 
             # Log completion
             await self.audit_service.log_all_completed(
@@ -224,10 +230,10 @@ class SigningService:
             logger.success("All signatures completed", request_id=str(request.id))
 
             # Send signer_signed webhook for the final signer
-            await self._send_signer_webhook(request, signer, all_signers)
+            await self._send_signer_webhook(updated_request, signer, all_signers)
 
             # Trigger completion service (PDF generation + signature_completed webhook)
-            await self._trigger_completion(request, all_signers)
+            await self._trigger_completion(updated_request, all_signers)
 
             next_signer = None
         else:

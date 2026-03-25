@@ -207,16 +207,26 @@ class SignatureRepository:
         logger.info("Request status updated", request_id=str(request_id), status=status)
 
     async def update_request_pdf_generated(
-        self, request_id: UUID, pdf_generated_at: datetime
+        self,
+        request_id: UUID,
+        pdf_generated_at: datetime,
+        document_hash: str | None = None,
     ) -> None:
-        """Update pdf_generated_at timestamp (JSON mode)."""
+        """Update pdf_generated_at timestamp and optional document hash (JSON/HTML mode)."""
+        values: dict = {"pdf_generated_at": pdf_generated_at}
+        if document_hash:
+            values["document_hash"] = document_hash
         stmt = (
             update(SignatureRequestRow)
             .where(SignatureRequestRow.id == str(request_id))
-            .values(pdf_generated_at=pdf_generated_at)
+            .values(**values)
         )
         await self.session.execute(stmt)
-        logger.info("Request pdf_generated_at updated", request_id=str(request_id))
+        logger.info(
+            "Request pdf_generated_at updated",
+            request_id=str(request_id),
+            has_hash=bool(document_hash),
+        )
 
     async def mark_signer_signed(
         self,

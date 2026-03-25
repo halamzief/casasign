@@ -42,7 +42,6 @@ class AuditTrailGenerator:
         # Page margins
         margin_x = 20 * mm
         margin_y = 20 * mm
-        content_width = width - 2 * margin_x
         y_position = height - margin_y
 
         # Title
@@ -176,20 +175,31 @@ class AuditTrailGenerator:
         y_position -= 7 * mm
 
         c.setFont("Helvetica", 9)
+        has_hash = bool(request.document_hash)
         compliance_text = [
-            "Dieses Dokument erfüllt die Anforderungen der eIDAS-Verordnung für",
-            "Fortgeschrittene Elektronische Signaturen (FES):",
+            "Dieses Dokument dokumentiert die Anforderungen einer fortgeschrittenen",
+            "elektronischen Signatur (FES) gemäß Art. 26 eIDAS-VO (EU) Nr. 910/2014:",
             "",
-            "✓ Eindeutig dem Unterzeichner zugeordnet (Email + Verifizierungs-Token)",
+            "✓ Eindeutig dem Unterzeichner zugeordnet (E-Mail + Verifizierungs-Token)",
             "✓ Identifizierung des Unterzeichners (Name, E-Mail, IP, Zeitstempel)",
             "✓ Alleinige Kontrolle (Token-basierte Authentifizierung)",
-            "✓ Manipulationserkennung (SHA-256 Dokumenten-Hash)",
+        ]
+        if has_hash:
+            compliance_text.append(
+                "✓ Manipulationserkennung (SHA-256 Dokumenten-Hash)"
+            )
+        else:
+            compliance_text.append(
+                "✓ Manipulationserkennung (SHA-256 Hash des generierten PDF)"
+            )
+        compliance_text.extend([
             "✓ Vollständiges Prüfprotokoll (Unveränderliches Ereignisprotokoll)",
             "",
-            "Gemäß Artikel 26 der eIDAS-Verordnung (EU) Nr. 910/2014 hat eine",
-            "fortgeschrittene elektronische Signatur dieselbe Rechtswirkung wie eine",
-            "handschriftliche Unterschrift bei Mietverträgen und ähnlichen Dokumenten.",
-        ]
+            "Gemäß Art. 25 Abs. 1 eIDAS-VO darf eine elektronische Signatur nicht",
+            "allein deshalb als Beweismittel zurückgewiesen werden, weil sie in",
+            "elektronischer Form vorliegt. Für unbefristete Mietverträge ohne Index-",
+            "oder Staffelmiete genügt die Textform nach § 126b BGB.",
+        ])
 
         for line in compliance_text:
             c.drawString(margin_x, y_position, line)

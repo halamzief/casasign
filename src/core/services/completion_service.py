@@ -19,6 +19,7 @@ from loguru import logger
 
 from src.config import Settings
 from src.models.signature_request import SignatureRequest, SignatureSigner
+from src.utils.hash_utils import calculate_sha256
 
 from ..audit.audit_service import AuditService
 from ..pdf.audit_trail_generator import AuditTrailGenerator
@@ -91,8 +92,8 @@ class CompletionService:
 
         try:
             # Determine processing mode based on document_type
-            if request.is_json_mode:
-                # JSON MODE: Generate PDF from contract_data + signatures
+            if request.document_type in ("json", "html"):
+                # JSON/HTML MODE: Generate PDF from contract_data/HTML + signatures
                 signed_pdf = await self._process_json_mode(request, signers)
             else:
                 # PDF MODE: Load existing PDF and add signature overlays
@@ -228,15 +229,20 @@ class CompletionService:
             signers=signers,
         )
 
-        # Embed XMP metadata for FES compliance
+        # Compute SHA-256 hash of the generated PDF for FES compliance
+        document_hash = calculate_sha256(pdf_bytes)
+
+        # Embed XMP metadata for FES compliance (with computed hash)
+        request.document_hash = document_hash
         signed_pdf = self.pdf_processor.embed_xmp_metadata(
             pdf_bytes=pdf_bytes, request=request, signers=signers
         )
 
-        # Update pdf_generated_at timestamp
+        # Update pdf_generated_at timestamp and document hash
         await self.signature_repo.update_request_pdf_generated(
             request_id=request.id,
             pdf_generated_at=datetime.now(timezone.utc),
+            document_hash=document_hash,
         )
 
         logger.success(

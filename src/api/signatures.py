@@ -28,6 +28,7 @@ from src.schemas.signing import (
     SigningCompleteResponse,
     TokenValidationResponse,
 )
+from src.utils.ip_utils import get_client_ip
 
 router = APIRouter(prefix="/api/sign", tags=["Signatures"])
 
@@ -84,8 +85,8 @@ async def create_signature_request(
     )
 
     try:
-        # Extract IP address
-        ip_address: Optional[str] = request.client.host if request.client else None
+        # Extract real client IP (supports X-Forwarded-For behind Caddy/Docker)
+        ip_address: Optional[str] = get_client_ip(request)
 
         # Create signature request
         response = await service.create_signature_request(
@@ -199,7 +200,7 @@ async def validate_token_and_get_contract(
     logger.info("API: Validating token", token=token[:10] + "...")
 
     try:
-        ip_address: Optional[str] = request.client.host if request.client else None
+        ip_address: Optional[str] = get_client_ip(request)
         user_agent: Optional[str] = request.headers.get("user-agent")
 
         response = await service.validate_token_and_get_contract(
@@ -217,6 +218,7 @@ async def validate_token_and_get_contract(
                 response.contract_html = polished_html
             except Exception as tmpl_err:
                 import traceback
+
                 logger.warning(
                     "Failed to render polished template, using fallback",
                     error=str(tmpl_err),
@@ -259,7 +261,7 @@ async def complete_signature(
     logger.info("API: Completing signature", token=token[:10] + "...")
 
     try:
-        ip_address: str = request.client.host if request.client else "unknown"
+        ip_address: str = get_client_ip(request)
         user_agent: str = request.headers.get("user-agent", "unknown")
 
         result = await service.complete_signature(
@@ -469,5 +471,3 @@ async def download_signed_pdf_file(
     except Exception as e:
         logger.error(f"API: Failed to download PDF file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to download PDF: {str(e)}") from e
-
-
